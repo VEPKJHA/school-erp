@@ -1,0 +1,105 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+    <meta charset="utf-8">
+    <title>School ERP Workflow Guide</title>
+    <style>
+        body { font-family: Calibri, Arial, sans-serif; line-height: 1.6; padding: 20px; }
+        h1 { color: #2563eb; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; }
+        h2 { color: #1e40af; margin-top: 30px; }
+        h3 { color: #3b82f6; }
+        .note { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
+        .code { font-family: Consolas, monospace; background: #f1f5f9; padding: 2px 5px; border-radius: 4px; }
+        ul, ol { margin-bottom: 20px; }
+        li { margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <h1>School ERP System: Complete Operational Workflow</h1>
+    <p>This document provides a step-by-step guide to the core operations of the School ERP system, from logging in to collecting student fees.</p>
+
+    <h2>1. Authentication & Roles</h2>
+    <p>The system is built on a <strong>multi-tenant architecture</strong>, meaning data is strictly isolated per school. To perform daily operations, you must log in as a user attached to a specific school.</p>
+
+    <div class="note">
+        <strong>IMPORTANT:</strong> Do not use the <em>Super Administrator</em> for daily tasks like Admissions or Fees, as the Super Admin operates system-wide and does not have a default <span class="code">schoolId</span>.
+    </div>
+
+    <ul>
+        <li><strong>School Administrator</strong> (<span class="code">admin@dpga.edu</span>): Has full authority over all school modules (Admissions, Fees, Classes, Users).</li>
+        <li><strong>Principal</strong> (<span class="code">principal@dpga.edu</span>): Can view academics, users, and reports.</li>
+        <li><strong>Accountant</strong> (<span class="code">accountant@dpga.edu</span>): Can view students and has full control over the Fee Engine.</li>
+        <li><strong>Teacher</strong> (<span class="code">teacher@dpga.edu</span>): Can manage attendance and exams for their assigned classes.</li>
+    </ul>
+    <p><em>(The default password for all administrative accounts is <span class="code">Admin@12345</span> and the School Code is <span class="code">DPGA01</span>)</em>.</p>
+
+    <h2>2. The Student Enrollment Workflow</h2>
+    <p>Enrolling a student is a two-step process to ensure data integrity and allow for document verification.</p>
+
+    <h3>Step 2.1: Register the Application</h3>
+    <ol>
+        <li>Log in as the <strong>School Administrator</strong> or <strong>Receptionist</strong>.</li>
+        <li>Navigate to <strong>Admissions</strong> on the left sidebar.</li>
+        <li>Click the <strong>+ New Admission Registration</strong> button.</li>
+        <li>Fill in the student's personal details, parent/guardian contact info, and select the <strong>Applying Class</strong> and <strong>Academic Session</strong>.</li>
+        <li>Click <strong>Submit</strong>.</li>
+    </ol>
+    <p><em>The application is now generated (e.g., <span class="code">APP/2026/00004</span>) but the student is NOT yet enrolled.</em></p>
+
+    <h3>Step 2.2: Approve the Admission</h3>
+    <ol>
+        <li>Go back to the <strong>Admissions</strong> list.</li>
+        <li>Click the <strong>Eye Icon (View)</strong> next to the newly submitted application.</li>
+        <li>Review the dossier. If everything is correct, click <strong>Approve Admission</strong>.</li>
+        <li>You will be prompted to assign the student to a specific <strong>Section</strong> (e.g., Section A).</li>
+        <li>Click <strong>Confirm</strong>.</li>
+    </ol>
+    <p><em>The system now generates an official Student ID (e.g., <span class="code">STU/2026/00001</span>) and moves the record to the active Students list.</em></p>
+
+    <h2>3. The Fee Management Workflow</h2>
+    <p>Once a student is officially enrolled, they must be assigned a Fee Structure before you can collect payments.</p>
+
+    <h3>Step 3.1: Verify Fee Heads & Structures</h3>
+    <p>Before assigning fees to a student, ensure the building blocks exist:</p>
+    <ol>
+        <li>Navigate to <strong>Fees → Fee Heads</strong> (e.g., <em>Tuition Fee</em>, <em>Transport Fee</em>, <em>Library Fee</em>).</li>
+        <li>Navigate to <strong>Fees → Fee Structures</strong> to group these heads together (e.g., <em>Class 1 Standard Fee Structure</em>).</li>
+    </ol>
+
+    <h3>Step 3.2: Assign Fees to the Student</h3>
+    <ol>
+        <li>Navigate to <strong>Fees → Fee Dashboard</strong>.</li>
+        <li>Click <strong>Assign Fees to Student</strong>.</li>
+        <li>Select the Student you just approved.</li>
+        <li>Select the <strong>Fee Structure</strong> (e.g., Class 1 Standard Fee).</li>
+        <li>The system will automatically generate <strong>Invoices</strong> for the student based on the structure's schedule (e.g., monthly, quarterly, or annually).</li>
+    </ol>
+
+    <h3>Step 3.3: Collecting a Fee Payment</h3>
+    <p>When a parent comes to pay a fee:</p>
+    <ol>
+        <li>Navigate to <strong>Fees → Fee Invoices</strong> (or search the student in the <strong>Student Fee Ledger</strong>).</li>
+        <li>Locate the <span class="code">UNPAID</span> or <span class="code">PARTIAL</span> invoice for the current month.</li>
+        <li>Click <strong>Collect Payment</strong>.</li>
+        <li>Enter the amount being paid. <em>(The system supports partial payments—if they pay less than the total, the invoice remains <span class="code">PARTIAL</span> and tracks the balance).</em></li>
+        <li>Select the <strong>Payment Method</strong> (Cash, Card, Bank Transfer, UPI).</li>
+        <li>Click <strong>Process Payment</strong>.</li>
+    </ol>
+
+    <h3>Step 3.4: Generating Receipts</h3>
+    <ol>
+        <li>Immediately after processing the payment, the system generates a <strong>Fee Receipt</strong> (e.g., <span class="code">REC/2026/00001</span>).</li>
+        <li>You can view, print, or download this receipt by navigating to <strong>Fees → Payment Receipts</strong>.</li>
+    </ol>
+
+    <h2>4. Viewing the Student Ledger</h2>
+    <p>At any time, the <strong>Accountant</strong> or <strong>Admin</strong> can navigate to <strong>Fees → Student Ledger</strong>. By searching for a student, you will see a complete financial timeline:</p>
+    <ul>
+        <li>Total Fees Billed</li>
+        <li>Total Fees Paid</li>
+        <li>Outstanding Balance</li>
+        <li>A historical log of every invoice generated and every receipt issued for that specific student.</li>
+    </ul>
+
+</body>
+</html>
