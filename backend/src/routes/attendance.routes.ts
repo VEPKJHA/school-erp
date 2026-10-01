@@ -13,14 +13,14 @@ router.use(authenticate, enforceTenant);
 
 router.post(
   '/mark',
-  requirePermission(PERMISSIONS.ATTENDANCE_CREATE),
+  requirePermission(PERMISSIONS.ATTENDANCE_STUDENT_CREATE),
   validate(AttendanceValidation.markAttendance),
   AttendanceController.markAttendance
 );
 
 router.post(
   '/bulk',
-  requirePermission(PERMISSIONS.ATTENDANCE_CREATE),
+  requirePermission(PERMISSIONS.ATTENDANCE_STUDENT_CREATE),
   validate(AttendanceValidation.bulkMarkAttendance),
   AttendanceController.bulkMarkAttendance
 );

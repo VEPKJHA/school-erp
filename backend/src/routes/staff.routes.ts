@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticate } from '../middleware/auth.middleware';
+import { AuthenticatedRequest, authenticate } from '../middleware/auth.middleware';
 import { enforceTenant } from '../middleware/tenant.middleware';
 import { requirePermission } from '../middleware/rbac.middleware';
 import { PERMISSIONS } from '../constants/permissions';
@@ -12,7 +12,7 @@ router.use(authenticate, enforceTenant);
 
 router.get('/', requirePermission(PERMISSIONS.USER_READ), async (req, res) => {
   try {
-    const schoolId = req.schoolId!;
+    const schoolId = (req as AuthenticatedRequest).schoolId!;
     const staff = await prisma.user.findMany({
       where: {
         schoolId,
