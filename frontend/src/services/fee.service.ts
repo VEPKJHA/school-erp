@@ -115,8 +115,8 @@ export const FeeService = {
   }): Promise<{ invoices: FeeInvoice[]; total: number }> {
     const res = await api.get('/fees/invoices', { params });
     return {
-      invoices: res.data?.data || [],
-      total: res.data?.meta?.total || res.data?.data?.length || 0,
+      invoices: res.data?.data?.invoices || [],
+      total: res.data?.data?.total || 0,
     };
   },
 
@@ -164,8 +164,8 @@ export const FeeService = {
   }): Promise<{ payments: FeePayment[]; total: number }> {
     const res = await api.get('/fees/payments', { params });
     return {
-      payments: res.data?.data || [],
-      total: res.data?.meta?.total || res.data?.data?.length || 0,
+      payments: res.data?.data?.payments || [],
+      total: res.data?.data?.total || 0,
     };
   },
 

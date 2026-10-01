@@ -1,0 +1,20 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const attendance_controller_1 = require("../controllers/attendance.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const tenant_middleware_1 = require("../middleware/tenant.middleware");
+const rbac_middleware_1 = require("../middleware/rbac.middleware");
+const validate_middleware_1 = require("../middleware/validate.middleware");
+const permissions_1 = require("../constants/permissions");
+const attendance_validation_1 = require("../validations/attendance.validation");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticate, tenant_middleware_1.enforceTenant);
+router.post('/mark', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.ATTENDANCE_CREATE), (0, validate_middleware_1.validate)(attendance_validation_1.AttendanceValidation.markAttendance), attendance_controller_1.AttendanceController.markAttendance);
+router.post('/bulk', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.ATTENDANCE_CREATE), (0, validate_middleware_1.validate)(attendance_validation_1.AttendanceValidation.bulkMarkAttendance), attendance_controller_1.AttendanceController.bulkMarkAttendance);
+router.get('/', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.ATTENDANCE_READ), attendance_controller_1.AttendanceController.getAttendance);
+router.get('/summary/daily', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.ATTENDANCE_REPORT), attendance_controller_1.AttendanceController.getDailySummary);
+router.get('/student/:studentId', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.ATTENDANCE_READ), attendance_controller_1.AttendanceController.getStudentStats);
+router.get('/register/monthly', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.ATTENDANCE_REPORT), attendance_controller_1.AttendanceController.getMonthlyRegister);
+exports.default = router;
+//# sourceMappingURL=attendance.routes.js.map

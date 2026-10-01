@@ -57,6 +57,8 @@ model School {
   gradingScales         GradingScale[]
   examSchedules         ExamSchedule[]
   examMarks             ExamMark[]
+  leaveRequests         LeaveRequest[]
+  payrolls              Payroll[]
 
   @@map("schools")
 }
@@ -141,6 +143,9 @@ model User {
   markedAttendances StudentAttendance[]
   timetableSlots    TimetableSlot[]
   enteredMarks      ExamMark[]
+  leaveRequests     LeaveRequest[]
+  payrolls          Payroll[]
+  classSections     Section[]           @relation("ClassTeacher")
 
   @@unique([schoolId, email])
   @@index([schoolId])
@@ -230,14 +235,16 @@ model Section {
   id         String   @id @default(uuid())
   schoolId   String   @map("school_id")
   classId    String   @map("class_id")
-  name       String   @db.VarChar(50)
-  capacity   Int      @default(40)
-  roomNumber String?  @db.VarChar(50)
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  name           String   @db.VarChar(50)
+  capacity       Int      @default(40)
+  roomNumber     String?  @db.VarChar(50)
+  classTeacherId String?  @map("class_teacher_id")
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   class              Class               @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classTeacher       User?               @relation("ClassTeacher", fields: [classTeacherId], references: [id], onDelete: SetNull)
   students           Student[]
   admissions         Admission[]
   studentAttendances StudentAttendance[]
@@ -981,4 +988,50 @@ model ExamMark {
   @@index([schoolId, examScheduleId])
   @@index([schoolId, studentId])
   @@map("exam_marks")
+}
+
+// ==========================================
+// 8. STAFF & PAYROLL MODELS (PHASE 6)
+// ==========================================
+
+model LeaveRequest {
+  id          String   @id @default(uuid())
+  schoolId    String   @map("school_id")
+  userId      String   @map("user_id")
+  leaveType   String   @db.VarChar(50) // SICK, CASUAL, MATERNITY
+  startDate   DateTime @db.Date
+  endDate     DateTime @db.Date
+  reason      String   @db.Text
+  status      String   @default("PENDING") @db.VarChar(20) // PENDING, APPROVED, REJECTED
+  appliedOn   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([schoolId, userId])
+  @@map("leave_requests")
+}
+
+model Payroll {
+  id             String   @id @default(uuid())
+  schoolId       String   @map("school_id")
+  userId         String   @map("user_id")
+  month          Int      
+  year           Int
+  basicSalary    Float
+  allowances     Float    @default(0)
+  deductions     Float    @default(0)
+  netSalary      Float
+  status         String   @default("DRAFT") @db.VarChar(20) // DRAFT, GENERATED, PAID
+  paymentDate    DateTime?
+  paymentMethod  String?  @db.VarChar(50)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([schoolId, userId, month, year])
+  @@map("payrolls")
 }

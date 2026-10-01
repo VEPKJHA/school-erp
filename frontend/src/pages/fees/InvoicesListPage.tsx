@@ -757,7 +757,7 @@ export const InvoicesListPage: React.FC = () => {
                             {p.receiptNumber}
                           </span>
                           <span className="text-[11px] text-slate-400 block">
-                            Mode: {p.paymentMode} • Date:{' '}
+                            Mode: {p.paymentMode} ? Date:{' '}
                             {new Date(p.paymentDate).toLocaleDateString()}
                           </span>
                         </div>
@@ -770,6 +770,17 @@ export const InvoicesListPage: React.FC = () => {
                 </div>
               </div>
             )}
+
+            <div className="flex justify-end pt-4 border-t border-slate-100 print:hidden">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center space-x-2"
+              >
+                <FileText className="w-4 h-4" />
+                <span>Print Invoice</span>
+              </button>
+            </div>
           </div>
         )}
       </Modal>

@@ -8,6 +8,11 @@ import studentRoutes from './student.routes';
 import admissionRoutes from './admission.routes';
 import parentRoutes from './parent.routes';
 import documentRoutes from './document.routes';
+import feeRoutes from './fee.routes';
+import staffRoutes from './staff.routes';
+import attendanceRoutes from './attendance.routes';
+import examRoutes from './exam.routes';
+import timetableRoutes from './timetable.routes';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.middleware';
 import { enforceTenant } from '../middleware/tenant.middleware';
 import { prisma } from '../config/prisma';
@@ -30,6 +35,11 @@ router.use('/students', studentRoutes);
 router.use('/admissions', admissionRoutes);
 router.use('/parents', parentRoutes);
 router.use('/documents', documentRoutes);
+router.use('/fees', feeRoutes);
+router.use('/staff', staffRoutes);
+router.use('/attendance', attendanceRoutes);
+router.use('/exams', examRoutes);
+router.use('/timetable', timetableRoutes);
 
 // Dashboard Live Stats Endpoint
 router.get('/dashboard/stats', authenticate, enforceTenant, async (req: AuthenticatedRequest, res) => {

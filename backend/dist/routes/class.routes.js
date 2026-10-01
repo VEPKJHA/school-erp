@@ -1,0 +1,24 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const class_controller_1 = require("../controllers/class.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const tenant_middleware_1 = require("../middleware/tenant.middleware");
+const rbac_middleware_1 = require("../middleware/rbac.middleware");
+const validate_middleware_1 = require("../middleware/validate.middleware");
+const class_validation_1 = require("../validations/class.validation");
+const permissions_1 = require("../constants/permissions");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authenticate, tenant_middleware_1.enforceTenant);
+router.get('/classes', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.CLASS_READ), class_controller_1.ClassController.getClasses);
+router.post('/classes', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.CLASS_CREATE), (0, validate_middleware_1.validate)(class_validation_1.createClassSchema), class_controller_1.ClassController.createClass);
+router.get('/classes/:id', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.CLASS_READ), class_controller_1.ClassController.getClassById);
+router.put('/classes/:id', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.CLASS_UPDATE), (0, validate_middleware_1.validate)(class_validation_1.updateClassSchema), class_controller_1.ClassController.updateClass);
+router.delete('/classes/:id', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.CLASS_DELETE), class_controller_1.ClassController.deactivateClass);
+router.get('/sections', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SECTION_READ), class_controller_1.ClassController.getSections);
+router.post('/classes/:classId/sections', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SECTION_CREATE), (0, validate_middleware_1.validate)(class_validation_1.createSectionSchema), class_controller_1.ClassController.createSection);
+router.get('/sections/:id', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SECTION_READ), class_controller_1.ClassController.getSectionById);
+router.put('/sections/:id', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SECTION_UPDATE), (0, validate_middleware_1.validate)(class_validation_1.updateSectionSchema), class_controller_1.ClassController.updateSection);
+router.delete('/sections/:id', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SECTION_DELETE), class_controller_1.ClassController.deactivateSection);
+exports.default = router;
+//# sourceMappingURL=class.routes.js.map
