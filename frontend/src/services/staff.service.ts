@@ -21,4 +21,24 @@ export const StaffService = {
     const res = await api.put(`/staff/${id}`, payload);
     return res.data?.data;
   },
+
+  async getLeaves(): Promise<any[]> {
+    const res = await api.get('/staff/leaves');
+    return res.data?.data || [];
+  },
+
+  async updateLeaveStatus(id: string, status: string): Promise<any> {
+    const res = await api.put(`/staff/leaves/${id}`, { status });
+    return res.data?.data;
+  },
+
+  async getPayrolls(): Promise<any[]> {
+    const res = await api.get('/staff/payroll');
+    return res.data?.data || [];
+  },
+
+  async updatePayrollStatus(id: string, status: string, paymentMethod?: string): Promise<any> {
+    const res = await api.put(`/staff/payroll/${id}`, { status, paymentMethod });
+    return res.data?.data;
+  },
 };

@@ -40,8 +40,8 @@ export const StaffListPage: React.FC = () => {
     {
       header: 'Role',
       accessor: (row) => (
-        <Badge variant={row.role?.code === 'TEACHER' ? 'success' : 'primary'}>
-          {row.role?.name || row.roleCode}
+        <Badge variant={row.role?.code === 'TEACHER' ? 'success' : 'info'}>
+          {row.role?.name || row.role?.code}
         </Badge>
       ),
     },
