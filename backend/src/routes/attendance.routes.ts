@@ -27,25 +27,25 @@ router.post(
 
 router.get(
   '/',
-  requirePermission(PERMISSIONS.ATTENDANCE_READ),
+  requirePermission(PERMISSIONS.ATTENDANCE_STUDENT_READ),
   AttendanceController.getAttendance
 );
 
 router.get(
   '/summary/daily',
-  requirePermission(PERMISSIONS.ATTENDANCE_REPORT),
+  requirePermission(PERMISSIONS.ATTENDANCE_STUDENT_REPORT),
   AttendanceController.getDailySummary
 );
 
 router.get(
   '/student/:studentId',
-  requirePermission(PERMISSIONS.ATTENDANCE_READ),
+  requirePermission(PERMISSIONS.ATTENDANCE_STUDENT_READ),
   AttendanceController.getStudentStats
 );
 
 router.get(
   '/register/monthly',
-  requirePermission(PERMISSIONS.ATTENDANCE_REPORT),
+  requirePermission(PERMISSIONS.ATTENDANCE_STUDENT_REPORT),
   AttendanceController.getMonthlyRegister
 );
 
