@@ -290,7 +290,32 @@ export const Sidebar: React.FC = () => {
           </div>
         )}
 
+        {/* Global Administration (Super Admin only) */}
+        {user?.roleCode === 'SUPER_ADMIN' && (
+          <div>
+            <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Global Administration
+            </p>
+            <nav className="space-y-1">
+              <NavLink
+                to="/superadmin/schools"
+                className={({ isActive }) =>
+                  `flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`
+                }
+              >
+                <Globe className="w-4 h-4 shrink-0" />
+                <span>Tenant Management</span>
+              </NavLink>
+            </nav>
+          </div>
+        )}
+
         {/* Next Phases Preview */}
+        {user?.roleCode !== 'SUPER_ADMIN' && (
         <div>
           <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
             Upcoming Modules
@@ -312,6 +337,7 @@ export const Sidebar: React.FC = () => {
             ))}
           </div>
         </div>
+        )}
       </div>
 
       {/* School Footer info */}

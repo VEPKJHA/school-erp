@@ -20,6 +20,12 @@ export class SchoolRepository {
     });
   }
 
+  static async create(data: any) {
+    return prisma.school.create({
+      data,
+    });
+  }
+
   static async findAll(page = 1, pageSize = 20, search?: string) {
     const where: any = {};
     if (search) {

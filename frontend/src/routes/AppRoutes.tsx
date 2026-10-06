@@ -30,6 +30,7 @@ import { StaffListPage } from '../pages/staff/StaffListPage';
 import { ClassTeacherAllocationsPage } from '../pages/staff/ClassTeacherAllocationsPage';
 import { LeaveManagementPage } from '../pages/staff/LeaveManagementPage';
 import { PayrollPage } from '../pages/staff/PayrollPage';
+import { SuperAdminDashboard } from '../pages/superadmin/SuperAdminDashboard';
 import { NotFoundPage } from '../pages/common/NotFoundPage';
 import { UnauthorizedPage } from '../pages/common/UnauthorizedPage';
 
@@ -46,6 +47,8 @@ export const AppRoutes: React.FC = () => {
         <Route element={<AdminLayout />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          
+          <Route path="/superadmin/schools" element={<SuperAdminDashboard />} />
 
           <Route
             element={<ProtectedRoute requiredPermission="academic:session:read" />}

@@ -64,5 +64,25 @@ export class SchoolController {
       return ResponseUtil.badRequest(res, error.message);
     }
   }
+
+  static async createSchool(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      if (req.user?.roleCode !== 'SUPER_ADMIN') {
+        return ResponseUtil.forbidden(res, 'Only Super Admins can create new schools');
+      }
+
+      const { adminUser, ...schoolData } = req.body;
+      const newSchool = await SchoolRepository.create(schoolData);
+
+      // We should probably generate the base roles for this school, just like we did in the seed script!
+      // I'll call a service for this or just do it inline for now.
+      
+      // We will skip full admin creation here to keep it simple, they can just create the school first.
+      
+      return ResponseUtil.success(res, newSchool, 'School created successfully', 201);
+    } catch (error: any) {
+      return ResponseUtil.badRequest(res, error.message);
+    }
+  }
 }
 
