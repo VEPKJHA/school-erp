@@ -9,7 +9,9 @@ export const SuperAdminDashboard: React.FC = () => {
   const [schools, setSchools] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', code: '', email: '', city: '', state: '' });
+  const [formData, setFormData] = useState({ 
+    name: '', code: '', email: '', phone: '', addressLine1: '', city: '', state: '', postalCode: '' 
+  });
   const { success, error } = useToast();
 
   const loadSchools = async () => {
@@ -33,7 +35,7 @@ export const SuperAdminDashboard: React.FC = () => {
       await SchoolService.createSchool(formData);
       success('School registered successfully!');
       setIsModalOpen(false);
-      setFormData({ name: '', code: '', email: '', city: '', state: '' });
+      setFormData({ name: '', code: '', email: '', phone: '', addressLine1: '', city: '', state: '', postalCode: '' });
       loadSchools();
     } catch (e: any) {
       error(e.response?.data?.message || 'Failed to register school');
@@ -99,30 +101,54 @@ export const SuperAdminDashboard: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">School Code</label>
-            <input
-              type="text"
-              required
-              className="w-full p-2 border rounded focus:ring focus:ring-indigo-200 focus:border-indigo-500"
-              value={formData.code}
-              onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">School Code</label>
+              <input
+                type="text"
+                required
+                className="w-full p-2 border rounded focus:ring focus:ring-indigo-200 focus:border-indigo-500"
+                value={formData.code}
+                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+              <input
+                type="text"
+                required
+                className="w-full p-2 border rounded focus:ring focus:ring-indigo-200 focus:border-indigo-500"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Contact Email</label>
             <input
               type="email"
+              required
               className="w-full p-2 border rounded focus:ring focus:ring-indigo-200 focus:border-indigo-500"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 1</label>
+            <input
+              type="text"
+              required
+              className="w-full p-2 border rounded focus:ring focus:ring-indigo-200 focus:border-indigo-500"
+              value={formData.addressLine1}
+              onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
               <input
                 type="text"
+                required
                 className="w-full p-2 border rounded focus:ring focus:ring-indigo-200 focus:border-indigo-500"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
@@ -132,9 +158,20 @@ export const SuperAdminDashboard: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
               <input
                 type="text"
+                required
                 className="w-full p-2 border rounded focus:ring focus:ring-indigo-200 focus:border-indigo-500"
                 value={formData.state}
                 onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">PIN Code</label>
+              <input
+                type="text"
+                required
+                className="w-full p-2 border rounded focus:ring focus:ring-indigo-200 focus:border-indigo-500"
+                value={formData.postalCode}
+                onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
               />
             </div>
           </div>
