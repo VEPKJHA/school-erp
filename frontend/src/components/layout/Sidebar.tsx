@@ -291,7 +291,7 @@ export const Sidebar: React.FC = () => {
         )}
 
         {/* Global Administration (Super Admin only) */}
-        {user?.roleCode === 'SUPER_ADMIN' && (
+        {user?.role?.code === 'SUPER_ADMIN' && (
           <div>
             <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
               Global Administration
@@ -315,7 +315,7 @@ export const Sidebar: React.FC = () => {
         )}
 
         {/* Next Phases Preview */}
-        {user?.roleCode !== 'SUPER_ADMIN' && (
+        {user?.role?.code !== 'SUPER_ADMIN' && (
         <div>
           <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
             Upcoming Modules

@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { SchoolService } from '../../services/school.service';
 import { Badge } from '../../components/common/Badge';
-import { FiPlus, FiSettings, FiUsers } from 'react-icons/fi';
-import toast from 'react-hot-toast';
+import { Plus, Settings, Users } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 
 export const SuperAdminDashboard: React.FC = () => {
   const [schools, setSchools] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { error } = useToast();
 
   const loadSchools = async () => {
     try {
       const res = await SchoolService.listSchools();
       setSchools(res.data?.data || []);
     } catch (e: any) {
-      toast.error('Failed to load schools');
+      error('Failed to load schools');
     } finally {
       setLoading(false);
     }
@@ -33,7 +34,7 @@ export const SuperAdminDashboard: React.FC = () => {
           <p className="text-sm text-gray-500">Manage all registered schools and tenants</p>
         </div>
         <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-          <FiPlus /> Register New School
+          <Plus className="w-4 h-4" /> Register New School
         </button>
       </div>
 
@@ -57,10 +58,10 @@ export const SuperAdminDashboard: React.FC = () => {
             </div>
             <div className="mt-4 pt-4 border-t flex justify-end gap-2">
               <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 text-slate-700 rounded hover:bg-slate-50">
-                <FiSettings /> Configure
+                <Settings className="w-4 h-4" /> Configure
               </button>
               <button className="flex items-center gap-2 px-3 py-1.5 border border-slate-300 text-slate-700 rounded hover:bg-slate-50">
-                <FiUsers /> Admins
+                <Users className="w-4 h-4" /> Admins
               </button>
             </div>
           </div>
