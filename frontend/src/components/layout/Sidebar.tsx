@@ -177,117 +177,121 @@ export const Sidebar: React.FC = () => {
 
       {/* Nav List */}
       <div className="flex-1 py-6 px-3 space-y-6 overflow-y-auto">
-        <div>
-          <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
-            Academic & Students
-          </p>
-          <nav className="space-y-1">
-            {navItems
-              .filter((item) => item.visible)
-              .map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                      isActive
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                    }`
-                  }
-                >
-                  <item.icon className="w-4 h-4 shrink-0" />
-                  <span>{item.label}</span>
-                </NavLink>
-              ))}
-          </nav>
-        </div>
+        {user?.role?.code !== 'SUPER_ADMIN' && (
+          <>
+            <div>
+              <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                Academic & Students
+              </p>
+              <nav className="space-y-1">
+                {navItems
+                  .filter((item) => item.visible)
+                  .map((item) => (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      className={({ isActive }) =>
+                        `flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                          isActive
+                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                        }`
+                      }
+                    >
+                      <item.icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  ))}
+              </nav>
+            </div>
 
-        {/* Attendance & Timetable */}
-        {attendanceNavItems.some((item) => item.visible) && (
-          <div>
-            <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Attendance & Timetable
-            </p>
-            <nav className="space-y-1">
-              {attendanceNavItems
-                .filter((item) => item.visible)
-                .map((item) => (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    className={({ isActive }) =>
-                      `flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                        isActive
-                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                      }`
-                    }
-                  >
-                    <item.icon className="w-4 h-4 shrink-0" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                ))}
-            </nav>
-          </div>
-        )}
+            {/* Attendance & Timetable */}
+            {attendanceNavItems.some((item) => item.visible) && (
+              <div>
+                <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                  Attendance & Timetable
+                </p>
+                <nav className="space-y-1">
+                  {attendanceNavItems
+                    .filter((item) => item.visible)
+                    .map((item) => (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        className={({ isActive }) =>
+                          `flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                            isActive
+                              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                          }`
+                        }
+                      >
+                        <item.icon className="w-4 h-4 shrink-0" />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    ))}
+                </nav>
+              </div>
+            )}
 
-        {/* Examination & Report Cards */}
-        {examNavItems.some((item) => item.visible) && (
-          <div>
-            <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Examination & Grades
-            </p>
-            <nav className="space-y-1">
-              {examNavItems
-                .filter((item) => item.visible)
-                .map((item) => (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    className={({ isActive }) =>
-                      `flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                        isActive
-                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                      }`
-                    }
-                  >
-                    <item.icon className="w-4 h-4 shrink-0" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                ))}
-            </nav>
-          </div>
-        )}
+            {/* Examination & Report Cards */}
+            {examNavItems.some((item) => item.visible) && (
+              <div>
+                <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                  Examination & Grades
+                </p>
+                <nav className="space-y-1">
+                  {examNavItems
+                    .filter((item) => item.visible)
+                    .map((item) => (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        className={({ isActive }) =>
+                          `flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                            isActive
+                              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                          }`
+                        }
+                      >
+                        <item.icon className="w-4 h-4 shrink-0" />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    ))}
+                </nav>
+              </div>
+            )}
 
-        {/* Fee Engine & Collections */}
-        {feeNavItems.some((item) => item.visible) && (
-          <div>
-            <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
-              Fee & Finance
-            </p>
-            <nav className="space-y-1">
-              {feeNavItems
-                .filter((item) => item.visible)
-                .map((item) => (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    className={({ isActive }) =>
-                      `flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                        isActive
-                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                          : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
-                      }`
-                    }
-                  >
-                    <item.icon className="w-4 h-4 shrink-0" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                ))}
-            </nav>
-          </div>
+            {/* Fee Engine & Collections */}
+            {feeNavItems.some((item) => item.visible) && (
+              <div>
+                <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                  Fee & Finance
+                </p>
+                <nav className="space-y-1">
+                  {feeNavItems
+                    .filter((item) => item.visible)
+                    .map((item) => (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        className={({ isActive }) =>
+                          `flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                            isActive
+                              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                              : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                          }`
+                        }
+                      >
+                        <item.icon className="w-4 h-4 shrink-0" />
+                        <span>{item.label}</span>
+                      </NavLink>
+                    ))}
+                </nav>
+              </div>
+            )}
+          </>
         )}
 
         {/* Global Administration (Super Admin only) */}
