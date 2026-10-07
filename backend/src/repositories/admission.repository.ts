@@ -249,6 +249,6 @@ export class AdmissionRepository {
         admission: updatedAdmission,
         student,
       };
-    });
+    }, { maxWait: 10000, timeout: 30000 });
   }
 }
