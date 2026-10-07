@@ -19,5 +19,10 @@ export const SchoolService = {
   async createSchool(data: any) {
     const res = await api.post('/schools', data);
     return res.data?.data;
+  },
+
+  async getSchoolAdmins(schoolId: string) {
+    const res = await api.get(`/schools/${schoolId}/admins`);
+    return res.data?.data;
   }
 };

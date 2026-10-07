@@ -3,6 +3,8 @@ import { SchoolRepository } from '../repositories/school.repository';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { ResponseUtil } from '../utils/apiResponse';
 import { AuditService } from '../services/audit.service';
+import { prisma } from '../config/prisma';
+import bcrypt from 'bcryptjs';
 
 export class SchoolController {
   static async getProfile(req: AuthenticatedRequest, res: Response, next: NextFunction) {
@@ -65,6 +67,22 @@ export class SchoolController {
     }
   }
 
+  static async getSchoolAdmins(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      if (req.user?.roleCode !== 'SUPER_ADMIN') {
+        return ResponseUtil.forbidden(res, 'Only Super Admins can view this');
+      }
+      const schoolId = req.params.id;
+      const admins = await prisma.user.findMany({
+        where: { schoolId, role: { code: 'SCHOOL_ADMIN' } },
+        select: { id: true, firstName: true, lastName: true, email: true, status: true }
+      });
+      return ResponseUtil.success(res, admins, 'Admins retrieved');
+    } catch (error: any) {
+      return ResponseUtil.badRequest(res, error.message);
+    }
+  }
+
   static async createSchool(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       if (req.user?.roleCode !== 'SUPER_ADMIN') {
@@ -74,12 +92,46 @@ export class SchoolController {
       const { adminUser, ...schoolData } = req.body;
       const newSchool = await SchoolRepository.create(schoolData);
 
-      // We should probably generate the base roles for this school, just like we did in the seed script!
-      // I'll call a service for this or just do it inline for now.
+      // Create base roles
+      const baseRoles = [
+        { code: 'SCHOOL_ADMIN', name: 'School Administrator', description: 'Full authority', isSystem: true },
+        { code: 'PRINCIPAL', name: 'Principal', description: 'Academic head', isSystem: false },
+        { code: 'ACCOUNTANT', name: 'Accountant', description: 'Finance', isSystem: false },
+        { code: 'TEACHER', name: 'Teacher', description: 'Class teacher', isSystem: false },
+      ];
+
+      const rolesMap: Record<string, string> = {};
+      for (const r of baseRoles) {
+        const createdRole = await prisma.role.create({
+          data: { ...r, schoolId: newSchool.id }
+        });
+        rolesMap[r.code] = createdRole.id;
+      }
+
+      // Create default admin
+      const defaultPassword = 'Admin@12345';
+      const passwordHash = await bcrypt.hash(defaultPassword, 10);
+      const adminEmail = `admin@${newSchool.code.toLowerCase()}.edu`;
       
-      // We will skip full admin creation here to keep it simple, they can just create the school first.
-      
-      return ResponseUtil.success(res, newSchool, 'School created successfully', 201);
+      const admin = await prisma.user.create({
+        data: {
+          email: adminEmail,
+          firstName: 'School',
+          lastName: 'Admin',
+          passwordHash,
+          schoolId: newSchool.id,
+          roleId: rolesMap['SCHOOL_ADMIN'],
+          status: 'ACTIVE'
+        }
+      });
+
+      return ResponseUtil.success(res, {
+        school: newSchool,
+        adminCredentials: {
+          email: adminEmail,
+          password: defaultPassword
+        }
+      }, 'School created successfully with default admin credentials', 201);
     } catch (error: any) {
       return ResponseUtil.badRequest(res, error.message);
     }
