@@ -16,6 +16,7 @@ import {
 import { FeeService } from '../../services/fee.service';
 import { ClassService } from '../../services/class.service';
 import { AcademicService } from '../../services/academic.service';
+import { StudentService } from '../../services/student.service';
 import { FeeStructure, FeeHead, ClassItem, Section, AcademicSession } from '../../types';
 import { Modal } from '../../components/common/Modal';
 import { Badge } from '../../components/common/Badge';
@@ -55,6 +56,13 @@ export const FeeStructuresPage: React.FC = () => {
   const [assignSectionId, setAssignSectionId] = useState('');
   const [targetSections, setTargetSections] = useState<Section[]>([]);
   const [isAssigning, setIsAssigning] = useState(false);
+
+  // Individual Assign Modal
+  const [isIndivAssignOpen, setIsIndivAssignOpen] = useState(false);
+  const [indivAssignTarget, setIndivAssignTarget] = useState<FeeStructure | null>(null);
+  const [indivStudentId, setIndivStudentId] = useState('');
+  const [indivStudentsList, setIndivStudentsList] = useState<any[]>([]);
+  const [isIndivAssigning, setIsIndivAssigning] = useState(false);
 
   // View Details Modal
   const [viewStructure, setViewStructure] = useState<FeeStructure | null>(null);
@@ -197,6 +205,38 @@ export const FeeStructuresPage: React.FC = () => {
       error(err.response?.data?.message || 'Failed to bulk assign fee structure');
     } finally {
       setIsAssigning(false);
+    }
+  };
+
+  const openIndivAssignModal = async (str: FeeStructure) => {
+    setIndivAssignTarget(str);
+    setIndivStudentId('');
+    try {
+      const res = await StudentService.getStudents({ classId: str.classId, academicSessionId: str.academicSessionId, pageSize: 500 });
+      setIndivStudentsList(res.students || []);
+      setIsIndivAssignOpen(true);
+    } catch (e) {
+      error('Failed to load students for this class');
+    }
+  };
+
+  const handleIndivAssign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!indivAssignTarget || !indivStudentId) return;
+
+    setIsIndivAssigning(true);
+    try {
+      await FeeService.assignFeeStructure({
+        studentId: indivStudentId,
+        feeStructureId: indivAssignTarget.id,
+        academicSessionId: indivAssignTarget.academicSessionId,
+      });
+      success('Successfully allocated fee structure to student');
+      setIsIndivAssignOpen(false);
+    } catch (err: any) {
+      error(err.response?.data?.message || 'Failed to assign fee structure');
+    } finally {
+      setIsIndivAssigning(false);
     }
   };
 
@@ -355,13 +395,22 @@ export const FeeStructuresPage: React.FC = () => {
                   </button>
 
                   {hasPermission('fee:assignment:create') && (
-                    <button
-                      onClick={() => openAssignModal(str)}
-                      className="flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-                    >
-                      <Users className="w-3.5 h-3.5" />
-                      <span>Allocate to Class</span>
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openIndivAssignModal(str)}
+                        className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        <span>Assign to Student</span>
+                      </button>
+                      <button
+                        onClick={() => openAssignModal(str)}
+                        className="flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        <span>Allocate to Class</span>
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -604,6 +653,62 @@ export const FeeStructuresPage: React.FC = () => {
               className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors disabled:opacity-50"
             >
               {isAssigning && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>Confirm Allocation</span>
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Individual Assign Modal */}
+      <Modal
+        isOpen={isIndivAssignOpen}
+        onClose={() => setIsIndivAssignOpen(false)}
+        title="Assign Fee Structure to Student"
+        maxWidth="md"
+      >
+        <form onSubmit={handleIndivAssign} className="space-y-4">
+          <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-900">
+            <p className="font-semibold text-sm">
+              Template: {indivAssignTarget?.name} ({formatCurrency(calculateStructureTotal(indivAssignTarget?.items))})
+            </p>
+            <p className="mt-1">
+              Class: {indivAssignTarget?.class?.name} ? Session: {indivAssignTarget?.session?.name}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              Select Student
+            </label>
+            <select
+              required
+              value={indivStudentId}
+              onChange={(e) => setIndivStudentId(e.target.value)}
+              className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800"
+            >
+              <option value="">Select a student...</option>
+              {indivStudentsList.map((stu: any) => (
+                <option key={stu.id} value={stu.id}>
+                  {stu.firstName} {stu.lastName} ({stu.studentCode}) - {stu.section?.name ? `Sec ${stu.section.name}` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsIndivAssignOpen(false)}
+              className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isIndivAssigning || !indivStudentId}
+              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors disabled:opacity-50"
+            >
+              {isIndivAssigning && <Loader2 className="w-4 h-4 animate-spin" />}
               <span>Confirm Allocation</span>
             </button>
           </div>
