@@ -156,6 +156,10 @@ export interface Student {
   email?: string;
   mobile?: string;
   photoUrl?: string;
+  transportRequired?: boolean;
+  pickupPoint?: string;
+  tcNumber?: string;
+  previousSchool?: string;
   status: StudentStatus;
   statusReason?: string;
   admissionDate: string;

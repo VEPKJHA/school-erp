@@ -16,10 +16,12 @@ import {
   AlertCircle,
   Loader2,
   CheckCircle2,
+  DollarSign,
 } from 'lucide-react';
 import { StudentService } from '../../services/student.service';
 import { ClassService } from '../../services/class.service';
-import { Student, ClassItem, Section, StudentStatus, StudentDocument } from '../../types';
+import { FeeService } from '../../services/fee.service';
+import { Student, ClassItem, Section, StudentStatus, StudentDocument, FeeStructure } from '../../types';
 import { DataTable, Column } from '../../components/common/DataTable';
 import { Modal } from '../../components/common/Modal';
 import { Badge } from '../../components/common/Badge';
@@ -54,6 +56,13 @@ export const StudentsListPage: React.FC = () => {
   const [newStatus, setNewStatus] = useState<StudentStatus>('ACTIVE');
   const [statusReason, setStatusReason] = useState('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  // Fee Assignment Modal State
+  const [isFeeAssignOpen, setIsFeeAssignOpen] = useState(false);
+  const [feeAssignTargetStudent, setFeeAssignTargetStudent] = useState<Student | null>(null);
+  const [availableStructures, setAvailableStructures] = useState<FeeStructure[]>([]);
+  const [selectedFeeStructureId, setSelectedFeeStructureId] = useState('');
+  const [isAssigningFee, setIsAssigningFee] = useState(false);
 
   // Document upload state
   const [uploadDocType, setUploadDocType] = useState('BIRTH_CERTIFICATE');
@@ -147,6 +156,42 @@ export const StudentsListPage: React.FC = () => {
       error(err.response?.data?.message || 'Failed to update status');
     } finally {
       setIsUpdatingStatus(false);
+    }
+  };
+
+  const handleOpenFeeAssignModal = async (student: Student) => {
+    setFeeAssignTargetStudent(student);
+    setSelectedFeeStructureId('');
+    try {
+      const structures = await FeeService.getFeeStructures({
+        classId: student.classId,
+        academicSessionId: student.academicSessionId,
+      });
+      setAvailableStructures(structures || []);
+      setIsFeeAssignOpen(true);
+    } catch (e: any) {
+      error(e.response?.data?.message || 'Failed to fetch fee templates for this student');
+    }
+  };
+
+  const handleAssignFeeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!feeAssignTargetStudent || !selectedFeeStructureId) return;
+
+    setIsAssigningFee(true);
+    try {
+      await FeeService.assignFeeStructure({
+        studentId: feeAssignTargetStudent.id,
+        feeStructureId: selectedFeeStructureId,
+        academicSessionId: feeAssignTargetStudent.academicSessionId,
+      });
+      success(`Fee structure assigned to ${feeAssignTargetStudent.firstName} successfully`);
+      setIsFeeAssignOpen(false);
+      fetchStudents();
+    } catch (err: any) {
+      error(err.response?.data?.message || 'Failed to assign fee template');
+    } finally {
+      setIsAssigningFee(false);
     }
   };
 
@@ -266,6 +311,15 @@ export const StudentsListPage: React.FC = () => {
           >
             <Eye className="w-4 h-4" />
           </button>
+          {hasPermission('fee:assignment:create') && (
+            <button
+              onClick={() => handleOpenFeeAssignModal(row)}
+              className="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+              title="Assign Fee Template"
+            >
+              <DollarSign className="w-4 h-4" />
+            </button>
+          )}
           {hasPermission('student:update') && (
             <button
               onClick={() => handleOpenStatusModal(row)}
@@ -703,6 +757,70 @@ export const StudentsListPage: React.FC = () => {
             >
               {isUpdatingStatus && <Loader2 className="w-4 h-4 animate-spin" />}
               <span>Save Status</span>
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Fee Structure Assignment Modal */}
+      <Modal
+        isOpen={isFeeAssignOpen}
+        onClose={() => setIsFeeAssignOpen(false)}
+        title="Assign Fee Structure Template"
+        maxWidth="md"
+      >
+        <form onSubmit={handleAssignFeeSubmit} className="space-y-4">
+          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900">
+            <p className="font-semibold text-sm">
+              Student: {feeAssignTargetStudent?.firstName} {feeAssignTargetStudent?.lastName} ({feeAssignTargetStudent?.studentCode})
+            </p>
+            <p className="mt-1">
+              Class: {feeAssignTargetStudent?.class?.name} • Session: {feeAssignTargetStudent?.session?.name}
+            </p>
+            <p className="mt-0.5 text-emerald-700 font-medium">
+              Transport Opt-in: {feeAssignTargetStudent?.transportRequired ? 'YES (Taking Transport)' : 'NO (No Transport)'}
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              Select Fee Structure Template <span className="text-rose-500">*</span>
+            </label>
+            <select
+              required
+              value={selectedFeeStructureId}
+              onChange={(e) => setSelectedFeeStructureId(e.target.value)}
+              className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            >
+              <option value="">Choose a fee template...</option>
+              {availableStructures.map((str) => (
+                <option key={str.id} value={str.id}>
+                  {str.name} ({str.frequency})
+                </option>
+              ))}
+            </select>
+            {availableStructures.length === 0 && (
+              <p className="text-xs text-amber-600 mt-1">
+                No fee structure found for this student's class and session. Please create one in Fee Templates first.
+              </p>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsFeeAssignOpen(false)}
+              className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg font-medium transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isAssigningFee || !selectedFeeStructureId}
+              className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {isAssigningFee && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>Confirm Assignment</span>
             </button>
           </div>
         </form>

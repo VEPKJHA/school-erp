@@ -334,7 +334,7 @@ export class FeeService {
       });
 
       return inv;
-    });
+    }, { maxWait: 15000, timeout: 30000 });
 
     await AuditService.log({
       schoolId,
@@ -362,18 +362,19 @@ export class FeeService {
       studentWhere.sectionId = data.sectionId;
     }
 
+    // Fetch all active/admitted students in the target class
     const students = await prisma.student.findMany({
       where: studentWhere,
       include: {
         feeAssignments: {
-          where: data.feeStructureId ? { feeStructureId: data.feeStructureId, isActive: true } : { isActive: true },
+          where: { isActive: true },
           include: {
             feeStructure: {
               include: {
-                items: { include: { feeHead: true } }
-              }
-            }
-          }
+                items: { include: { feeHead: true } },
+              },
+            },
+          },
         },
       },
     });
@@ -382,46 +383,93 @@ export class FeeService {
       throw new Error('No students found in the selected class/section for fee generation');
     }
 
+    // If a specific feeStructureId was selected, load it as the default structure for students
+    let defaultStructure: any = null;
+    if (data.feeStructureId && data.feeStructureId !== 'AUTO') {
+      defaultStructure = await FeeRepository.findFeeStructureById(data.feeStructureId, schoolId);
+      if (!defaultStructure) {
+        throw new Error('Selected fee structure template not found');
+      }
+    } else {
+      // Find default active structure for this class and session
+      defaultStructure = await prisma.feeStructure.findFirst({
+        where: {
+          schoolId,
+          classId: data.classId,
+          academicSessionId: data.academicSessionId,
+          isActive: true,
+        },
+        include: {
+          items: { include: { feeHead: true } },
+        },
+      });
+    }
+
     let generatedCount = 0;
-    const year = new Date().getFullYear();
 
     for (const student of students) {
-      const activeAssignments = student.feeAssignments;
-      
-      if (activeAssignments.length === 0) {
+      // Determine applicable structure:
+      // 1. Student's individual assigned structure (if any)
+      // 2. Default class structure (fallback)
+      const assignment = student.feeAssignments?.[0];
+      const structure = assignment?.feeStructure || defaultStructure;
+
+      if (!structure) {
+        // Skip students if no fee structure can be determined
         continue;
       }
 
-      for (const assignment of activeAssignments) {
-        const structure = assignment.feeStructure;
-        if (!structure) continue;
-        
-        const concessionAmount = assignment ? Number(assignment.concessionAmount) : 0;
-        const items = structure.items.map((it: any) => ({
+      const concessionAmount = assignment ? Number(assignment.concessionAmount || 0) : 0;
+
+      // Filter items: If student didn't opt for transport (transportRequired is false),
+      // omit any fee head containing 'transport' or 'bus' or 'van'
+      const items: any[] = [];
+      for (const it of structure.items) {
+        const headName = (it.feeHead?.name || '').toLowerCase();
+        const headCode = (it.feeHead?.code || '').toLowerCase();
+        const isTransportHead =
+          headName.includes('transport') ||
+          headName.includes('bus') ||
+          headName.includes('van') ||
+          headCode.includes('transport') ||
+          headCode.includes('bus');
+
+        if (isTransportHead && !student.transportRequired) {
+          // Student is not taking transport; skip or charge 0
+          continue;
+        }
+
+        items.push({
           feeHeadId: it.feeHeadId,
           description: it.feeHead.name,
           amount: Number(it.amount),
-        }));
-
-        await this.generateInvoice(
-          schoolId,
-          {
-            studentId: student.id,
-            academicSessionId: data.academicSessionId, // or structure.academicSessionId
-            title: data.title,
-            dueDate: data.dueDate,
-            discountAmount: concessionAmount,
-            lateFeeAmount: 0,
-            items,
-          },
-          userId
-        );
-        generatedCount++;
+        });
       }
+
+      if (items.length === 0) {
+        continue;
+      }
+
+      await this.generateInvoice(
+        schoolId,
+        {
+          studentId: student.id,
+          academicSessionId: data.academicSessionId,
+          title: data.title,
+          dueDate: data.dueDate,
+          discountAmount: concessionAmount,
+          lateFeeAmount: 0,
+          items,
+        },
+        userId
+      );
+      generatedCount++;
     }
 
     if (generatedCount === 0) {
-      throw new Error('No invoices generated. Please ensure students have assigned fee structures.');
+      throw new Error(
+        'No invoices generated. Please ensure a fee structure exists for this class or is assigned to students.'
+      );
     }
 
     return { generatedCount, totalEligible: students.length };

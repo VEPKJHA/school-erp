@@ -189,7 +189,7 @@ export class FeeController {
         `Generated ${result.generatedCount} invoices for enrolled students`
       );
     } catch (err: any) {
-      if (err.message.includes('not found') || err.message.includes('No students')) {
+      if (err.message && !err.message.includes('PrismaClient')) {
         return ResponseUtil.badRequest(res, err.message);
       }
       next(err);

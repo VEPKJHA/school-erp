@@ -595,7 +595,10 @@ export const InvoicesListPage: React.FC = () => {
                 onChange={(e) => setBulkStructureId(e.target.value)}
                 className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800"
               >
-                <option value="">Select Fee Template</option><option value="AUTO">? Auto (Use Individual Student Assignments)</option>
+                <option value="">Select Fee Template</option>
+                <option value="AUTO" className="font-semibold text-indigo-700 bg-indigo-50">
+                  ⚡ Auto (Individual Student Template & Transport Check)
+                </option>
                 {feeStructures
                   .filter((str) => str.classId === bulkClassId)
                   .map((str) => (
