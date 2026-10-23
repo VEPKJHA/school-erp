@@ -174,6 +174,8 @@ export class AdmissionRepository {
           email: admission.parentEmail,
           transportRequired: admission.transportRequired,
           pickupPoint: admission.pickupPoint,
+          transportDistanceKm: admission.transportDistanceKm,
+          transportSlab: admission.transportSlab,
           tcNumber: admission.tcNumber,
           previousSchool: admission.previousSchool,
           status: 'ACTIVE',

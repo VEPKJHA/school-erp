@@ -64,6 +64,8 @@ export const createAdmissionSchema = z.object({
   // Transport Details
   transportRequired: z.boolean().optional().default(false),
   pickupPoint: z.string().max(150).optional(),
+  transportDistanceKm: z.number().nonnegative().optional(),
+  transportSlab: z.string().max(50).optional(),
   transportInstructions: z.string().max(500).optional(),
 
   // Documents Checklist

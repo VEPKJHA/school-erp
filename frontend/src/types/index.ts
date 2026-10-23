@@ -158,6 +158,8 @@ export interface Student {
   photoUrl?: string;
   transportRequired?: boolean;
   pickupPoint?: string;
+  transportDistanceKm?: number;
+  transportSlab?: string;
   tcNumber?: string;
   previousSchool?: string;
   status: StudentStatus;
@@ -228,6 +230,8 @@ export interface Admission {
   emergencyContactMobile?: string;
   transportRequired?: boolean;
   pickupPoint?: string;
+  transportDistanceKm?: number;
+  transportSlab?: string;
   transportInstructions?: string;
   previousSchool?: string;
   previousClassAndBoard?: string;

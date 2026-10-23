@@ -314,6 +314,8 @@ model Student {
   photoUrl          String?       @map("photo_url") @db.VarChar(500)
   transportRequired Boolean       @default(false) @map("transport_required")
   pickupPoint       String?       @map("pickup_point") @db.VarChar(150)
+  transportDistanceKm Float?      @map("transport_distance_km")
+  transportSlab     String?       @map("transport_slab") @db.VarChar(50) // e.g. "0-10", "10-20", "20+"
   tcNumber          String?       @map("tc_number") @db.VarChar(100)
   previousSchool    String?       @map("previous_school") @db.VarChar(200)
   status            StudentStatus @default(ACTIVE)
@@ -504,6 +506,8 @@ model Admission {
   // Transport Details
   transportRequired      Boolean @default(false) @map("transport_required")
   pickupPoint            String? @map("pickup_point") @db.VarChar(150)
+  transportDistanceKm    Float?  @map("transport_distance_km")
+  transportSlab          String? @map("transport_slab") @db.VarChar(50) // e.g. "0-10", "10-20", "20+"
   transportInstructions  String? @map("transport_instructions") @db.VarChar(500)
 
   // Documents Checklist (JSON/String representation of verified documents)

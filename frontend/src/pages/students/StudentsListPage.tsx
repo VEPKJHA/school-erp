@@ -545,6 +545,28 @@ export const StudentsListPage: React.FC = () => {
                     {new Date(selectedStudent.admissionDate).toLocaleDateString()}
                   </span>
                 </div>
+                <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100 sm:col-span-2">
+                  <span className="text-emerald-700 font-semibold block mb-1">School Transport / वाहन विवरण</span>
+                  <span className="font-semibold text-slate-800 text-sm">
+                    {selectedStudent.transportRequired
+                      ? `Yes • Slab: ${
+                          selectedStudent.transportSlab === '0-10'
+                            ? '0–10 km (₹1,800/mo)'
+                            : selectedStudent.transportSlab === '10-20'
+                            ? '10–20 km (₹2,000/mo)'
+                            : selectedStudent.transportSlab === '20+'
+                            ? '20+ km (₹2,200/mo)'
+                            : selectedStudent.transportSlab || 'Standard'
+                        }${
+                          selectedStudent.transportDistanceKm
+                            ? ` (${selectedStudent.transportDistanceKm} km)`
+                            : ''
+                        }${
+                          selectedStudent.pickupPoint ? ` • Pickup: ${selectedStudent.pickupPoint}` : ''
+                        }`
+                      : 'Not Required (₹0 Transport Fee)'}
+                  </span>
+                </div>
               </div>
             )}
 
@@ -778,7 +800,21 @@ export const StudentsListPage: React.FC = () => {
               Class: {feeAssignTargetStudent?.class?.name} • Session: {feeAssignTargetStudent?.session?.name}
             </p>
             <p className="mt-0.5 text-emerald-700 font-medium">
-              Transport Opt-in: {feeAssignTargetStudent?.transportRequired ? 'YES (Taking Transport)' : 'NO (No Transport)'}
+              Transport: {feeAssignTargetStudent?.transportRequired
+                ? `YES — Slab: ${
+                    feeAssignTargetStudent?.transportSlab === '0-10'
+                      ? '0–10 km (₹1,800/mo)'
+                      : feeAssignTargetStudent?.transportSlab === '10-20'
+                      ? '10–20 km (₹2,000/mo)'
+                      : feeAssignTargetStudent?.transportSlab === '20+'
+                      ? '20+ km (₹2,200/mo)'
+                      : feeAssignTargetStudent?.transportSlab || 'Standard'
+                  }${
+                    feeAssignTargetStudent?.transportDistanceKm
+                      ? ` (${feeAssignTargetStudent.transportDistanceKm} km)`
+                      : ''
+                  }`
+                : 'NO (Transport fee will be automatically waived ₹0 on invoice)'}
             </p>
           </div>
 

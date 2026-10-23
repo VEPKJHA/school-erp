@@ -502,10 +502,31 @@ export const AdmissionsListPage: React.FC = () => {
               <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-lg">
                 <span className="text-emerald-700 font-bold block mb-1">Transport / वाहन सुविधा</span>
                 <span className="font-semibold text-slate-800 text-sm block">
-                  {selectedAdmission.transportRequired ? `Required (Pickup: ${selectedAdmission.pickupPoint || 'N/A'})` : 'Not Required'}
+                  {selectedAdmission.transportRequired
+                    ? `Required • Slab: ${
+                        selectedAdmission.transportSlab === '0-10'
+                          ? '0–10 km (₹1,800/mo)'
+                          : selectedAdmission.transportSlab === '10-20'
+                          ? '10–20 km (₹2,000/mo)'
+                          : selectedAdmission.transportSlab === '20+'
+                          ? '20+ km (₹2,200/mo)'
+                          : selectedAdmission.transportSlab || 'Standard'
+                      }${
+                        selectedAdmission.transportDistanceKm
+                          ? ` (${selectedAdmission.transportDistanceKm} km)`
+                          : ''
+                      }`
+                    : 'Not Required / स्वयं द्वारा'}
                 </span>
+                {selectedAdmission.transportRequired && selectedAdmission.pickupPoint && (
+                  <span className="text-xs text-slate-600 block mt-0.5">
+                    Pickup: {selectedAdmission.pickupPoint}
+                  </span>
+                )}
                 {selectedAdmission.transportInstructions && (
-                  <span className="text-xs text-slate-500">{selectedAdmission.transportInstructions}</span>
+                  <span className="text-xs text-slate-500 block mt-0.5">
+                    {selectedAdmission.transportInstructions}
+                  </span>
                 )}
               </div>
 

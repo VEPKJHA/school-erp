@@ -21,6 +21,11 @@ export const createStudentSchema = z.object({
   mobile: z.string().max(50).optional(),
   photoUrl: z.string().url().optional().or(z.literal('')),
 
+  transportRequired: z.boolean().optional(),
+  pickupPoint: z.string().max(150).optional(),
+  transportDistanceKm: z.number().nonnegative().optional(),
+  transportSlab: z.string().max(50).optional(),
+
   // Parent/Guardian (optional during quick creation)
   parent: z
     .object({
@@ -62,6 +67,10 @@ export const updateStudentSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
   mobile: z.string().max(50).optional(),
   photoUrl: z.string().url().optional().or(z.literal('')),
+  transportRequired: z.boolean().optional(),
+  pickupPoint: z.string().max(150).optional(),
+  transportDistanceKm: z.number().nonnegative().optional(),
+  transportSlab: z.string().max(50).optional(),
 });
 
 export const updateStudentStatusSchema = z.object({

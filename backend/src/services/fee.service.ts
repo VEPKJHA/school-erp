@@ -423,6 +423,8 @@ export class FeeService {
 
       // Filter items: If student didn't opt for transport (transportRequired is false),
       // omit any fee head containing 'transport' or 'bus' or 'van'
+      // If student takes transport, calculate transport fee based on distance slabs:
+      // 0-10 km: ₹1800, 10-20 km: ₹2000, 20+ km: ₹2200 (or distance-based computation)
       const items: any[] = [];
       for (const it of structure.items) {
         const headName = (it.feeHead?.name || '').toLowerCase();
@@ -434,8 +436,40 @@ export class FeeService {
           headCode.includes('transport') ||
           headCode.includes('bus');
 
-        if (isTransportHead && !student.transportRequired) {
-          // Student is not taking transport; skip or charge 0
+        if (isTransportHead) {
+          if (!student.transportRequired) {
+            // Student is not taking transport; skip transport fee
+            continue;
+          }
+
+          // Calculate transport fee based on slab or distance
+          let transportAmount = Number(it.amount);
+          const slab = (student.transportSlab || '').trim().toLowerCase();
+          const dist = student.transportDistanceKm != null ? Number(student.transportDistanceKm) : null;
+
+          if (slab === '0-10' || slab === '0-10 km' || (dist !== null && dist > 0 && dist <= 10)) {
+            transportAmount = 1800;
+          } else if (
+            slab === '10-20' ||
+            slab === '10-20 km' ||
+            (dist !== null && dist > 10 && dist <= 20)
+          ) {
+            transportAmount = 2000;
+          } else if (
+            slab === '20+' ||
+            slab === '20+ km' ||
+            slab === '20-30' ||
+            slab === '20-30 km' ||
+            (dist !== null && dist > 20)
+          ) {
+            transportAmount = 2200;
+          }
+
+          items.push({
+            feeHeadId: it.feeHeadId,
+            description: `${it.feeHead.name} (${student.transportSlab || (dist ? `${dist} km` : 'Standard')})`,
+            amount: transportAmount,
+          });
           continue;
         }
 
