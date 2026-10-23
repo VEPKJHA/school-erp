@@ -126,7 +126,7 @@ export const StudentFeeLedgerPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Page Title & Top Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 print:hidden">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
             <BookOpen className="w-7 h-7 text-indigo-600" />
@@ -159,7 +159,7 @@ export const StudentFeeLedgerPage: React.FC = () => {
       </div>
 
       {/* Student Selector Search Box */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-sm relative">
+      <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-sm relative print:hidden">
         <label className="block text-xs font-semibold uppercase text-slate-500 tracking-wider mb-2">
           Select or Search Student
         </label>
@@ -231,7 +231,17 @@ export const StudentFeeLedgerPage: React.FC = () => {
       {/* Selected Student Information & Financial Summary Cards */}
       {selectedStudent && !isLoadingLedger && (
         <>
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-6">
+          {/* Printable Institution & Statement Header */}
+          <div className="hidden print:block text-center border-b pb-4 mb-4">
+            <h2 className="text-xl font-bold tracking-tight uppercase text-slate-900">
+              SHISHU NIKETAN / DEMO PUBLIC GLOBAL ACADEMY
+            </h2>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Official Student Fee Ledger & Account Statement • Generated on {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-6 print:border-slate-300 print:p-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               {/* Student Demographics */}
               <div className="flex items-start gap-4">

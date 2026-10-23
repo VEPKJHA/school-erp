@@ -10,3 +10,79 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* ==========================================
+   GLOBAL PRINT OPTIMIZATION
+   Hides sidebar navigation, header bars, action buttons,
+   and un-constrains scrolling so that only clean printable
+   statements, receipts, invoices, and reports appear.
+   ========================================== */
+@media print {
+  /* Hide sidebar and top header globally */
+  aside,
+  header,
+  nav,
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Reset layout constraints so printed pages flow naturally */
+  html,
+  body {
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt !important;
+  }
+
+  /* Remove scrollbars, fixed viewports, and shadow containers */
+  div.h-screen,
+  div.overflow-hidden,
+  div.overflow-y-auto,
+  main {
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: transparent !important;
+  }
+
+  /* When printing a modal (e.g. invoice or voucher), expand modal and hide backdrop */
+  .fixed.inset-0 {
+    position: static !important;
+    overflow: visible !important;
+  }
+
+  .backdrop-blur-sm,
+  .bg-slate-900\\/50 {
+    display: none !important;
+  }
+
+  /* Ensure card borders print crisply without web shadows */
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl,
+  .shadow-2xl {
+    box-shadow: none !important;
+  }
+
+  /* Ensure tables don't get awkwardly clipped across page breaks */
+  table {
+    page-break-inside: auto !important;
+  }
+  tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+  thead {
+    display: table-header-group !important;
+  }
+  tfoot {
+    display: table-footer-group !important;
+  }
+}

@@ -394,8 +394,8 @@ export const PaymentReceiptsPage: React.FC = () => {
 
       {/* PRINTABLE OFFICIAL RECEIPT VOUCHER MODAL */}
       {isVoucherOpen && selectedPayment && (
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden transform transition-all">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 print:static print:bg-transparent print:p-0 print:block">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden transform transition-all print:shadow-none print:border-none print:max-w-none print:w-full print:rounded-none">
             {/* Modal Actions Header (Hidden in Print) */}
             <div className="print:hidden flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
               <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm">
