@@ -70,7 +70,7 @@ export const InvoicesListPage: React.FC = () => {
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [bulkClassId, setBulkClassId] = useState('');
   const [bulkSessionId, setBulkSessionId] = useState('');
-  const [bulkStructureId, setBulkStructureId] = useState('');
+  const [bulkStructureId, setBulkStructureId] = useState('AUTO');
   const [bulkTitle, setBulkTitle] = useState('');
   const [bulkDueDate, setBulkDueDate] = useState('');
   const [isBulkGenerating, setIsBulkGenerating] = useState(false);
@@ -341,7 +341,10 @@ export const InvoicesListPage: React.FC = () => {
         {hasPermission('fee:invoice:create') && (
           <div className="flex items-center space-x-2">
             <button
-              onClick={() => setBulkModalOpen(true)}
+              onClick={() => {
+                setBulkStructureId('AUTO');
+                setBulkModalOpen(true);
+              }}
               className="flex items-center space-x-2 px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl font-medium text-xs transition-colors cursor-pointer"
             >
               <Users className="w-4 h-4" />
@@ -586,27 +589,35 @@ export const InvoicesListPage: React.FC = () => {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Fee Structure Template <span className="text-rose-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  Fee Structure Template
+                </label>
+                <span className="text-[11px] text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded">
+                  Auto by Default
+                </span>
+              </div>
               <select
-                required
                 value={bulkStructureId}
                 onChange={(e) => setBulkStructureId(e.target.value)}
-                className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800"
+                className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               >
-                <option value="">Select Fee Template</option>
-                <option value="AUTO" className="font-semibold text-indigo-700 bg-indigo-50">
-                  ⚡ Auto (Individual Student Template & Transport Check)
+                <option value="AUTO">
+                  ⚡ Auto: Use each student's assigned fee template (Auto-computes transport)
                 </option>
-                {feeStructures
-                  .filter((str) => str.classId === bulkClassId)
-                  .map((str) => (
-                    <option key={str.id} value={str.id}>
-                      {str.name} ({str.frequency})
-                    </option>
-                  ))}
+                <optgroup label="Or override class with a specific template:">
+                  {feeStructures
+                    .filter((str) => str.classId === bulkClassId)
+                    .map((str) => (
+                      <option key={str.id} value={str.id}>
+                        {str.name} ({str.frequency})
+                      </option>
+                    ))}
+                </optgroup>
               </select>
+              <p className="text-[11px] text-slate-500 mt-1">
+                Leave as <strong>Auto</strong> to generate fees based on each student's individual assigned template. Transport fee is automatically included or omitted based on whether the student uses school transport.
+              </p>
             </div>
 
             <div className="sm:col-span-2">
