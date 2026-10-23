@@ -353,11 +353,6 @@ export class FeeService {
     data: BulkGenerateInvoicesInput,
     userId?: string
   ) {
-    const structure = await FeeRepository.findFeeStructureById(data.feeStructureId, schoolId);
-    if (!structure) {
-      throw new Error('Fee structure template not found');
-    }
-
     const studentWhere: any = {
       schoolId,
       classId: data.classId,
@@ -371,7 +366,14 @@ export class FeeService {
       where: studentWhere,
       include: {
         feeAssignments: {
-          where: { feeStructureId: data.feeStructureId, isActive: true },
+          where: data.feeStructureId ? { feeStructureId: data.feeStructureId, isActive: true } : { isActive: true },
+          include: {
+            feeStructure: {
+              include: {
+                items: { include: { feeHead: true } }
+              }
+            }
+          }
         },
       },
     });
@@ -384,29 +386,42 @@ export class FeeService {
     const year = new Date().getFullYear();
 
     for (const student of students) {
-      const assignment = student.feeAssignments[0];
-      const concessionAmount = assignment ? Number(assignment.concessionAmount) : 0;
+      const activeAssignments = student.feeAssignments;
+      
+      if (activeAssignments.length === 0) {
+        continue;
+      }
 
-      const items = structure.items.map((it: any) => ({
-        feeHeadId: it.feeHeadId,
-        description: it.feeHead.name,
-        amount: Number(it.amount),
-      }));
+      for (const assignment of activeAssignments) {
+        const structure = assignment.feeStructure;
+        if (!structure) continue;
+        
+        const concessionAmount = assignment ? Number(assignment.concessionAmount) : 0;
+        const items = structure.items.map((it: any) => ({
+          feeHeadId: it.feeHeadId,
+          description: it.feeHead.name,
+          amount: Number(it.amount),
+        }));
 
-      await this.generateInvoice(
-        schoolId,
-        {
-          studentId: student.id,
-          academicSessionId: data.academicSessionId,
-          title: data.title,
-          dueDate: data.dueDate,
-          discountAmount: concessionAmount,
-          lateFeeAmount: 0,
-          items,
-        },
-        userId
-      );
-      generatedCount++;
+        await this.generateInvoice(
+          schoolId,
+          {
+            studentId: student.id,
+            academicSessionId: data.academicSessionId, // or structure.academicSessionId
+            title: data.title,
+            dueDate: data.dueDate,
+            discountAmount: concessionAmount,
+            lateFeeAmount: 0,
+            items,
+          },
+          userId
+        );
+        generatedCount++;
+      }
+    }
+
+    if (generatedCount === 0) {
+      throw new Error('No invoices generated. Please ensure students have assigned fee structures.');
     }
 
     return { generatedCount, totalEligible: students.length };

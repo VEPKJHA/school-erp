@@ -8,7 +8,7 @@ export const requirePermission = (...requiredPermissions: string[]) => {
       return ResponseUtil.unauthorized(res, 'Authentication required');
     }
 
-    if (req.user.roleCode === 'SUPER_ADMIN') {
+    if (req.user.roleCode === 'SUPER_ADMIN' || req.user.roleCode === 'SCHOOL_ADMIN') {
       return next();
     }
 

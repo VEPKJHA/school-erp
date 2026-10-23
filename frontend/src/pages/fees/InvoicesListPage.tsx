@@ -166,20 +166,24 @@ export const InvoicesListPage: React.FC = () => {
 
   const handleBulkGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!bulkClassId || !bulkSessionId || !bulkStructureId || !bulkTitle.trim() || !bulkDueDate) {
+    if (!bulkClassId || !bulkSessionId || !bulkTitle.trim() || !bulkDueDate) {
       error('Please fill in all required fields');
       return;
     }
 
     setIsBulkGenerating(true);
     try {
-      const res = await FeeService.bulkGenerateInvoices({
+      const payload: any = {
         classId: bulkClassId,
         academicSessionId: bulkSessionId,
-        feeStructureId: bulkStructureId,
         title: bulkTitle.trim(),
         dueDate: bulkDueDate,
-      });
+      };
+      if (bulkStructureId !== 'AUTO') {
+        payload.feeStructureId = bulkStructureId;
+      }
+
+      const res = await FeeService.bulkGenerateInvoices(payload);
       success(`Generated ${res.generatedCount} invoices for enrolled class students`);
       setBulkModalOpen(false);
       fetchInvoices();
@@ -591,7 +595,7 @@ export const InvoicesListPage: React.FC = () => {
                 onChange={(e) => setBulkStructureId(e.target.value)}
                 className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800"
               >
-                <option value="">Select Fee Template</option>
+                <option value="">Select Fee Template</option><option value="AUTO">? Auto (Use Individual Student Assignments)</option>
                 {feeStructures
                   .filter((str) => str.classId === bulkClassId)
                   .map((str) => (
@@ -787,3 +791,4 @@ export const InvoicesListPage: React.FC = () => {
     </div>
   );
 };
+

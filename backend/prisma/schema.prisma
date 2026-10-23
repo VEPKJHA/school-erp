@@ -311,8 +311,12 @@ model Student {
   aadhaarNumber String?       @map("aadhaar_number") @db.VarChar(50)
   email         String?       @db.VarChar(191)
   mobile        String?       @db.VarChar(50)
-  photoUrl      String?       @map("photo_url") @db.VarChar(500)
-  status        StudentStatus @default(ACTIVE)
+  photoUrl          String?       @map("photo_url") @db.VarChar(500)
+  transportRequired Boolean       @default(false) @map("transport_required")
+  pickupPoint       String?       @map("pickup_point") @db.VarChar(150)
+  tcNumber          String?       @map("tc_number") @db.VarChar(100)
+  previousSchool    String?       @map("previous_school") @db.VarChar(200)
+  status            StudentStatus @default(ACTIVE)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -459,6 +463,11 @@ model Admission {
   religion      String?  @db.VarChar(50)
   aadhaarNumber String?  @map("aadhaar_number") @db.VarChar(50)
 
+  // Academic & Previous School Details
+  previousSchool         String? @map("previous_school") @db.VarChar(200)
+  previousClassAndBoard  String? @map("previous_class_and_board") @db.VarChar(100)
+  tcNumber               String? @map("tc_number") @db.VarChar(100)
+
   // Primary Contact & Guardian Details
   parentName       String  @map("parent_name") @db.VarChar(150)
   parentRelation   String  @default("FATHER") @map("parent_relation") @db.VarChar(50)
@@ -466,12 +475,39 @@ model Admission {
   parentEmail      String? @map("parent_email") @db.VarChar(191)
   parentOccupation String? @map("parent_occupation") @db.VarChar(100)
 
-  // Address
+  // Specific Parent & Guardian Details
+  fatherName        String? @map("father_name") @db.VarChar(150)
+  fatherOccupation  String? @map("father_occupation") @db.VarChar(100)
+  fatherMobile      String? @map("father_mobile") @db.VarChar(50)
+  motherName        String? @map("mother_name") @db.VarChar(150)
+  motherOccupation  String? @map("mother_occupation") @db.VarChar(100)
+  motherMobile      String? @map("mother_mobile") @db.VarChar(50)
+  guardianName      String? @map("guardian_name") @db.VarChar(150)
+  guardianMobile    String? @map("guardian_mobile") @db.VarChar(50)
+
+  // Address & Police/Post Office
   addressLine1 String  @map("address_line1") @db.VarChar(255)
   addressLine2 String? @map("address_line2") @db.VarChar(255)
+  villageTown  String? @map("village_town") @db.VarChar(150)
+  postOffice   String? @map("post_office") @db.VarChar(100)
+  policeStation String? @map("police_station") @db.VarChar(100)
+  district     String? @db.VarChar(100)
   city         String  @db.VarChar(100)
   state        String  @db.VarChar(100)
   postalCode   String  @map("postal_code") @db.VarChar(20)
+
+  // Emergency Contact
+  emergencyContactName     String? @map("emergency_contact_name") @db.VarChar(150)
+  emergencyContactRelation String? @map("emergency_contact_relation") @db.VarChar(50)
+  emergencyContactMobile   String? @map("emergency_contact_mobile") @db.VarChar(50)
+
+  // Transport Details
+  transportRequired      Boolean @default(false) @map("transport_required")
+  pickupPoint            String? @map("pickup_point") @db.VarChar(150)
+  transportInstructions  String? @map("transport_instructions") @db.VarChar(500)
+
+  // Documents Checklist (JSON/String representation of verified documents)
+  documentsChecklist     String? @map("documents_checklist") @db.Text
 
   // Approval Trail
   approvedById    String?   @map("approved_by_id")

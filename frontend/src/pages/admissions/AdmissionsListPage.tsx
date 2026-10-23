@@ -451,44 +451,84 @@ export const AdmissionsListPage: React.FC = () => {
             {/* Profile Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="p-3 bg-slate-50 rounded-lg">
-                <span className="text-slate-400 block mb-1">Date of Birth & Gender</span>
+                <span className="text-slate-400 block mb-1">Date of Birth & Gender / जन्म तिथि एवं लिंग</span>
                 <span className="font-semibold text-slate-800 text-sm">
                   {new Date(selectedAdmission.dateOfBirth).toLocaleDateString()} •{' '}
                   {selectedAdmission.gender}
                 </span>
               </div>
               <div className="p-3 bg-slate-50 rounded-lg">
-                <span className="text-slate-400 block mb-1">Parent / Guardian</span>
+                <span className="text-slate-400 block mb-1">Aadhaar & Blood Group / आधार एवं रक्त समूह</span>
                 <span className="font-semibold text-slate-800 text-sm">
-                  {selectedAdmission.parentName} ({selectedAdmission.parentRelation})
+                  {selectedAdmission.aadhaarNumber || 'Not provided'} • {selectedAdmission.bloodGroup || 'N/A'}
                 </span>
-                <span className="text-slate-500 block">{selectedAdmission.parentMobile}</span>
               </div>
+
+              {/* Parents */}
               <div className="p-3 bg-slate-50 rounded-lg">
-                <span className="text-slate-400 block mb-1">Blood Group & Nationality</span>
-                <span className="font-semibold text-slate-800 text-sm">
-                  {selectedAdmission.bloodGroup || 'Not specified'} •{' '}
-                  {selectedAdmission.nationality}
-                </span>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-lg">
-                <span className="text-slate-400 block mb-1">Category & Religion</span>
-                <span className="font-semibold text-slate-800 text-sm">
-                  {selectedAdmission.category || 'General'} /{' '}
-                  {selectedAdmission.religion || 'Not specified'}
-                </span>
-              </div>
-              <div className="p-3 bg-slate-50 rounded-lg sm:col-span-2">
-                <span className="text-slate-400 block mb-1">Residential Address</span>
+                <span className="text-slate-400 block mb-1">Father's Details / पिता विवरण</span>
                 <span className="font-semibold text-slate-800 text-sm block">
-                  {selectedAdmission.addressLine1}
-                  {selectedAdmission.addressLine2 ? `, ${selectedAdmission.addressLine2}` : ''}
+                  {selectedAdmission.fatherName || selectedAdmission.parentName}
+                </span>
+                <span className="text-slate-500 block">
+                  {selectedAdmission.fatherMobile || selectedAdmission.parentMobile} • {selectedAdmission.fatherOccupation || 'N/A'}
+                </span>
+              </div>
+              <div className="p-3 bg-slate-50 rounded-lg">
+                <span className="text-slate-400 block mb-1">Mother's Details / माता विवरण</span>
+                <span className="font-semibold text-slate-800 text-sm block">
+                  {selectedAdmission.motherName || 'N/A'}
+                </span>
+                <span className="text-slate-500 block">
+                  {selectedAdmission.motherMobile || 'N/A'} • {selectedAdmission.motherOccupation || 'N/A'}
+                </span>
+              </div>
+
+              {/* Address */}
+              <div className="p-3 bg-slate-50 rounded-lg sm:col-span-2">
+                <span className="text-slate-400 block mb-1">Residential Address / पता</span>
+                <span className="font-semibold text-slate-800 text-sm block">
+                  {selectedAdmission.villageTown ? `Village/Town: ${selectedAdmission.villageTown}, ` : ''}
+                  {selectedAdmission.postOffice ? `P.O: ${selectedAdmission.postOffice}, ` : ''}
+                  {selectedAdmission.policeStation ? `P.S: ${selectedAdmission.policeStation}` : ''}
                 </span>
                 <span className="text-slate-500">
-                  {selectedAdmission.city}, {selectedAdmission.state} —{' '}
+                  {selectedAdmission.district || selectedAdmission.city}, {selectedAdmission.state} —{' '}
                   {selectedAdmission.postalCode}
                 </span>
               </div>
+
+              {/* Transport & Previous Schooling */}
+              <div className="p-3 bg-emerald-50/70 border border-emerald-100 rounded-lg">
+                <span className="text-emerald-700 font-bold block mb-1">Transport / वाहन सुविधा</span>
+                <span className="font-semibold text-slate-800 text-sm block">
+                  {selectedAdmission.transportRequired ? `Required (Pickup: ${selectedAdmission.pickupPoint || 'N/A'})` : 'Not Required'}
+                </span>
+                {selectedAdmission.transportInstructions && (
+                  <span className="text-xs text-slate-500">{selectedAdmission.transportInstructions}</span>
+                )}
+              </div>
+
+              <div className="p-3 bg-slate-50 rounded-lg">
+                <span className="text-slate-400 block mb-1">Previous School & TC / पूर्व विद्यालय</span>
+                <span className="font-semibold text-slate-800 text-sm block">
+                  {selectedAdmission.previousSchool || 'Direct Admission / N/A'}
+                </span>
+                <span className="text-slate-500 block">
+                  TC No: {selectedAdmission.tcNumber || 'N/A'} • Class/Board: {selectedAdmission.previousClassAndBoard || 'N/A'}
+                </span>
+              </div>
+
+              {/* Emergency Contact */}
+              {selectedAdmission.emergencyContactName && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg sm:col-span-2">
+                  <span className="text-amber-800 font-semibold block mb-1">Emergency Contact / आपातकालीन संपर्क</span>
+                  <span className="text-amber-900 font-medium">
+                    {selectedAdmission.emergencyContactName} ({selectedAdmission.emergencyContactRelation || 'Relation N/A'}) • {selectedAdmission.emergencyContactMobile}
+                  </span>
+                </div>
+              )}
+
               {selectedAdmission.rejectionReason && (
                 <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg sm:col-span-2">
                   <span className="text-rose-600 font-semibold block mb-1">Rejection Reason</span>

@@ -172,6 +172,10 @@ export class AdmissionRepository {
           aadhaarNumber: admission.aadhaarNumber,
           mobile: admission.parentMobile,
           email: admission.parentEmail,
+          transportRequired: admission.transportRequired,
+          pickupPoint: admission.pickupPoint,
+          tcNumber: admission.tcNumber,
+          previousSchool: admission.previousSchool,
           status: 'ACTIVE',
         },
       });

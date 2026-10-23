@@ -77,7 +77,7 @@ export const bulkGenerateInvoicesSchema = z.object({
   classId: z.string().min(1, 'Class is required'),
   sectionId: z.string().optional(),
   academicSessionId: z.string().min(1, 'Academic session is required'),
-  feeStructureId: z.string().min(1, 'Fee structure is required'),
+  feeStructureId: z.string().optional(), // Now optional
   title: z.string().min(1, 'Invoice title is required').max(255),
   dueDate: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: 'Valid due date is required (YYYY-MM-DD)',

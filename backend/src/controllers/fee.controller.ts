@@ -7,7 +7,6 @@ export class FeeController {
   // ==========================================
   // FEE HEADS
   // ==========================================
-
   static async getFeeHeads(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const schoolId = req.schoolId!;

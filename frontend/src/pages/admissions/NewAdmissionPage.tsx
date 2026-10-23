@@ -42,28 +42,54 @@ export const NewAdmissionPage: React.FC = () => {
     religion: '',
     aadhaarNumber: '',
 
-    // Step 2: Parent / Guardian
-    parentName: '',
-    parentRelation: 'FATHER' as ParentRelation,
-    parentMobile: '',
+    // Previous School Details
+    previousSchool: '',
+    previousClassAndBoard: '',
+    tcNumber: '',
+
+    // Step 2: Parent / Guardian (Specific fields as per school form)
+    fatherName: '',
+    fatherOccupation: '',
+    fatherMobile: '',
+    motherName: '',
+    motherOccupation: '',
+    motherMobile: '',
+    guardianName: '',
+    guardianMobile: '',
     parentEmail: '',
-    parentOccupation: '',
 
-    // Step 3: Address
-    addressLine1: '',
-    addressLine2: '',
-    city: '',
-    state: '',
+    // Step 3: Address & Emergency
+    villageTown: '',
+    postOffice: '',
+    policeStation: '',
+    district: '',
+    state: 'Bihar',
     postalCode: '',
-    country: 'India',
+    addressLine1: '',
 
-    // Step 4: Academic Details
+    // Emergency Contact
+    emergencyContactName: '',
+    emergencyContactRelation: '',
+    emergencyContactMobile: '',
+
+    // Step 4: Transport & Academic Details
+    transportRequired: false,
+    pickupPoint: '',
+    transportInstructions: '',
+
     academicSessionId: '',
     applyingClassId: '',
-    previousSchoolName: '',
-    previousClass: '',
-    previousPercentage: '',
     remarks: '',
+
+    // Step 5: Document checklist items
+    docBirthCert: false,
+    docAadhaar: false,
+    docPhotos: false,
+    docReportCard: false,
+    docTC: false,
+    docParentId: false,
+    docCasteEws: false,
+    docOther: '',
   });
 
   useEffect(() => {
@@ -105,34 +131,39 @@ export const NewAdmissionPage: React.FC = () => {
   const validateStep = (step: number): boolean => {
     if (step === 1) {
       if (!formData.firstName.trim() || !formData.lastName.trim()) {
-        error('Student first and last names are required');
+        error('Student first and last names are required / विद्यार्थी का पूरा नाम आवश्यक है');
         return false;
       }
       if (!formData.dateOfBirth) {
-        error('Student date of birth is required');
+        error('Student date of birth is required / जन्म तिथि आवश्यक है');
         return false;
       }
     } else if (step === 2) {
-      if (!formData.parentName.trim()) {
-        error('Parent/Guardian full name is required');
+      if (!formData.fatherName.trim() && !formData.motherName.trim() && !formData.guardianName.trim()) {
+        error("At least Father's, Mother's or Guardian's name is required / पिता अथवा माता का नाम आवश्यक है");
         return false;
       }
-      if (!formData.parentMobile.trim() || formData.parentMobile.trim().length < 5) {
-        error('Valid parent contact number is required');
+      const contactNo = formData.fatherMobile || formData.motherMobile || formData.guardianMobile;
+      if (!contactNo || contactNo.trim().length < 5) {
+        error('Valid contact mobile number is required / मोबाइल नंबर आवश्यक है');
         return false;
       }
     } else if (step === 3) {
-      if (!formData.addressLine1.trim() || !formData.city.trim() || !formData.state.trim() || !formData.postalCode.trim()) {
-        error('Address line 1, city, state, and postal code are required');
+      if (!formData.villageTown.trim() && !formData.addressLine1.trim()) {
+        error('Village / Town or Address is required / पता अथवा गाँव का नाम आवश्यक है');
         return false;
       }
     } else if (step === 4) {
       if (!formData.academicSessionId) {
-        error('Please select an academic session');
+        error('Please select an academic session / शैक्षणिक सत्र चुनें');
         return false;
       }
       if (!formData.applyingClassId) {
-        error('Please select the applying class');
+        error('Please select the applying class / कक्षा चुनें');
+        return false;
+      }
+      if (formData.transportRequired && !formData.pickupPoint.trim()) {
+        error('Please enter pickup point for transport / वाहन हेतु चढ़ने का स्थान लिखें');
         return false;
       }
     }
@@ -156,6 +187,33 @@ export const NewAdmissionPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      const primaryParentName =
+        formData.fatherName.trim() ||
+        formData.motherName.trim() ||
+        formData.guardianName.trim() ||
+        'Parent';
+      const primaryRelation = formData.fatherName.trim()
+        ? 'FATHER'
+        : formData.motherName.trim()
+        ? 'MOTHER'
+        : 'GUARDIAN';
+      const primaryMobile =
+        formData.fatherMobile.trim() ||
+        formData.motherMobile.trim() ||
+        formData.guardianMobile.trim() ||
+        '9999999999';
+
+      const checklistObj = {
+        birthCertificate: formData.docBirthCert,
+        aadhaarCopy: formData.docAadhaar,
+        passportPhotos: formData.docPhotos,
+        previousReportCard: formData.docReportCard,
+        transferCertificate: formData.docTC,
+        parentId: formData.docParentId,
+        casteEws: formData.docCasteEws,
+        other: formData.docOther,
+      };
+
       const payload: any = {
         academicSessionId: formData.academicSessionId,
         applyingClassId: formData.applyingClassId,
@@ -173,17 +231,42 @@ export const NewAdmissionPage: React.FC = () => {
         religion: formData.religion || undefined,
         aadhaarNumber: formData.aadhaarNumber.trim() || undefined,
 
-        parentName: formData.parentName.trim(),
-        parentRelation: formData.parentRelation,
-        parentMobile: formData.parentMobile.trim(),
-        parentEmail: formData.parentEmail.trim() || undefined,
-        parentOccupation: formData.parentOccupation.trim() || undefined,
+        previousSchool: formData.previousSchool.trim() || undefined,
+        previousClassAndBoard: formData.previousClassAndBoard.trim() || undefined,
+        tcNumber: formData.tcNumber.trim() || undefined,
 
-        addressLine1: formData.addressLine1.trim(),
-        addressLine2: formData.addressLine2.trim() || undefined,
-        city: formData.city.trim(),
-        state: formData.state.trim(),
-        postalCode: formData.postalCode.trim(),
+        parentName: primaryParentName,
+        parentRelation: primaryRelation,
+        parentMobile: primaryMobile,
+        parentEmail: formData.parentEmail.trim() || undefined,
+        parentOccupation: formData.fatherOccupation || formData.motherOccupation || undefined,
+
+        fatherName: formData.fatherName.trim() || undefined,
+        fatherOccupation: formData.fatherOccupation.trim() || undefined,
+        fatherMobile: formData.fatherMobile.trim() || undefined,
+        motherName: formData.motherName.trim() || undefined,
+        motherOccupation: formData.motherOccupation.trim() || undefined,
+        motherMobile: formData.motherMobile.trim() || undefined,
+        guardianName: formData.guardianName.trim() || undefined,
+        guardianMobile: formData.guardianMobile.trim() || undefined,
+
+        villageTown: formData.villageTown.trim() || undefined,
+        postOffice: formData.postOffice.trim() || undefined,
+        policeStation: formData.policeStation.trim() || undefined,
+        district: formData.district.trim() || undefined,
+        addressLine1: formData.addressLine1.trim() || formData.villageTown.trim() || 'N/A',
+        city: formData.district.trim() || 'Supaul',
+        state: formData.state.trim() || 'Bihar',
+        postalCode: formData.postalCode.trim() || '852215',
+
+        emergencyContactName: formData.emergencyContactName.trim() || undefined,
+        emergencyContactRelation: formData.emergencyContactRelation.trim() || undefined,
+        emergencyContactMobile: formData.emergencyContactMobile.trim() || undefined,
+
+        transportRequired: formData.transportRequired,
+        pickupPoint: formData.pickupPoint.trim() || undefined,
+        transportInstructions: formData.transportInstructions.trim() || undefined,
+        documentsChecklist: JSON.stringify(checklistObj),
       };
 
       const result = await AdmissionService.createAdmission(payload);
@@ -483,9 +566,9 @@ export const NewAdmissionPage: React.FC = () => {
                 />
               </div>
 
-              <div className="sm:col-span-2">
+              <div className="sm:col-span-1">
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Aadhaar Card Number
+                  Aadhaar Card No. / आधार संख्या
                 </label>
                 <input
                   type="text"
@@ -497,6 +580,55 @@ export const NewAdmissionPage: React.FC = () => {
                   className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
                 />
               </div>
+
+              {/* Previous Schooling Information */}
+              <div className="sm:col-span-3 pt-3 border-t border-slate-100">
+                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">
+                  Previous Schooling / पूर्व विद्यालय विवरण
+                </h3>
+              </div>
+
+              <div className="sm:col-span-3">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                  Previous School Name / पूर्व विद्यालय
+                </label>
+                <input
+                  type="text"
+                  name="previousSchool"
+                  value={formData.previousSchool}
+                  onChange={handleChange}
+                  placeholder="Name and location of previous school"
+                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                  Previous Class & Board / पिछली कक्षा एवं बोर्ड
+                </label>
+                <input
+                  type="text"
+                  name="previousClassAndBoard"
+                  value={formData.previousClassAndBoard}
+                  onChange={handleChange}
+                  placeholder="e.g. Class 2 - CBSE / State Board"
+                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                  Transfer Certificate (TC) No. / स्थानांतरण प्रमाण-पत्र संख्या
+                </label>
+                <input
+                  type="text"
+                  name="tcNumber"
+                  value={formData.tcNumber}
+                  onChange={handleChange}
+                  placeholder="TC Reference / Serial Number"
+                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+              </div>
             </div>
           </div>
         )}
@@ -505,60 +637,143 @@ export const NewAdmissionPage: React.FC = () => {
         {currentStep === 2 && (
           <div className="space-y-6">
             <div className="border-b border-slate-100 pb-3">
-              <h2 className="text-base font-bold text-slate-900">Parent / Guardian Information</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Primary emergency and communication contact</p>
+              <h2 className="text-base font-bold text-slate-900">
+                Parent / Guardian Details / माता-पिता / अभिभावक का विवरण
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Complete contact and occupation details for father, mother, and optional guardian
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Father Details */}
+            <div className="p-4 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-3">
+              <h3 className="text-xs font-bold text-indigo-700 uppercase tracking-wider">
+                Father's Details / पिता का विवरण
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Father’s Name / पिता का नाम
+                  </label>
+                  <input
+                    type="text"
+                    name="fatherName"
+                    value={formData.fatherName}
+                    onChange={handleChange}
+                    placeholder="Full name of father"
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Occupation / व्यवसाय
+                  </label>
+                  <input
+                    type="text"
+                    name="fatherOccupation"
+                    value={formData.fatherOccupation}
+                    onChange={handleChange}
+                    placeholder="e.g. Business, Agriculture, Service"
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Father’s Mobile / पिता का मोबाइल
+                  </label>
+                  <input
+                    type="tel"
+                    name="fatherMobile"
+                    value={formData.fatherMobile}
+                    onChange={handleChange}
+                    placeholder="10-digit mobile"
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Mother Details */}
+            <div className="p-4 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-3">
+              <h3 className="text-xs font-bold text-rose-700 uppercase tracking-wider">
+                Mother's Details / माता का विवरण
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Mother’s Name / माता का नाम
+                  </label>
+                  <input
+                    type="text"
+                    name="motherName"
+                    value={formData.motherName}
+                    onChange={handleChange}
+                    placeholder="Full name of mother"
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Occupation / व्यवसाय
+                  </label>
+                  <input
+                    type="text"
+                    name="motherOccupation"
+                    value={formData.motherOccupation}
+                    onChange={handleChange}
+                    placeholder="e.g. Homemaker, Teacher, Service"
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Mother’s Mobile / माता का मोबाइल
+                  </label>
+                  <input
+                    type="tel"
+                    name="motherMobile"
+                    value={formData.motherMobile}
+                    onChange={handleChange}
+                    placeholder="10-digit mobile"
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Guardian & Email */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Parent / Guardian Name <span className="text-rose-500">*</span>
+                  Guardian Name (if applicable) / अभिभावक
                 </label>
                 <input
                   type="text"
-                  name="parentName"
-                  value={formData.parentName}
+                  name="guardianName"
+                  value={formData.guardianName}
                   onChange={handleChange}
-                  placeholder="e.g. Sunil Sharma"
-                  required
+                  placeholder="Only if other than parents"
                   className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Relationship <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  name="parentRelation"
-                  value={formData.parentRelation}
-                  onChange={handleChange}
-                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                >
-                  <option value="FATHER">Father</option>
-                  <option value="MOTHER">Mother</option>
-                  <option value="GUARDIAN">Guardian</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Contact Mobile Number <span className="text-rose-500">*</span>
+                  Guardian Mobile / अभिभावक मोबाइल
                 </label>
                 <input
                   type="tel"
-                  name="parentMobile"
-                  value={formData.parentMobile}
+                  name="guardianMobile"
+                  value={formData.guardianMobile}
                   onChange={handleChange}
-                  placeholder="+91 98765 43210"
-                  required
-                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  placeholder="10-digit mobile"
+                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Email Address
+                  Family Email Address (Optional)
                 </label>
                 <input
                   type="email"
@@ -569,118 +784,159 @@ export const NewAdmissionPage: React.FC = () => {
                   className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
               </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Occupation / Organization
-                </label>
-                <input
-                  type="text"
-                  name="parentOccupation"
-                  value={formData.parentOccupation}
-                  onChange={handleChange}
-                  placeholder="e.g. Senior Software Engineer / Government Service"
-                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
             </div>
           </div>
         )}
 
-        {/* Step 3: Residential Address */}
+        {/* Step 3: Address & Emergency Contact */}
         {currentStep === 3 && (
           <div className="space-y-6">
             <div className="border-b border-slate-100 pb-3">
-              <h2 className="text-base font-bold text-slate-900">Residential Address</h2>
-              <p className="text-xs text-slate-500 mt-0.5">Physical residence for school transport and records</p>
+              <h2 className="text-base font-bold text-slate-900">
+                Address & Emergency Contact / पता एवं आपातकालीन संपर्क
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Residential address for communication, student records and emergency contact
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Address Line 1 <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="addressLine1"
-                  value={formData.addressLine1}
-                  onChange={handleChange}
-                  placeholder="House/Flat No., Building Name, Street"
-                  required
-                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
+            <div className="p-4 bg-slate-50/70 rounded-xl border border-slate-200/80 space-y-3">
+              <h3 className="text-xs font-bold text-indigo-700 uppercase tracking-wider">
+                Residential Address / आवासीय पता
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-1">
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Village / Town / गाँव / शहर <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="villageTown"
+                    value={formData.villageTown}
+                    onChange={handleChange}
+                    placeholder="e.g. Fakirna"
+                    required
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
 
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Address Line 2
-                </label>
-                <input
-                  type="text"
-                  name="addressLine2"
-                  value={formData.addressLine2}
-                  onChange={handleChange}
-                  placeholder="Locality, Landmark, Area"
-                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Post Office (P.O.) / डाकघर
+                  </label>
+                  <input
+                    type="text"
+                    name="postOffice"
+                    value={formData.postOffice}
+                    onChange={handleChange}
+                    placeholder="Post office name"
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  City <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleChange}
-                  placeholder="e.g. Delhi / Bengaluru"
-                  required
-                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Police Station (P.S.) / थाना
+                  </label>
+                  <input
+                    type="text"
+                    name="policeStation"
+                    value={formData.policeStation}
+                    onChange={handleChange}
+                    placeholder="Police station jurisdiction"
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  State <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="state"
-                  value={formData.state}
-                  onChange={handleChange}
-                  placeholder="e.g. Delhi / Karnataka"
-                  required
-                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    District / जिला
+                  </label>
+                  <input
+                    type="text"
+                    name="district"
+                    value={formData.district}
+                    onChange={handleChange}
+                    placeholder="e.g. Supaul"
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Postal Code / PIN <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="postalCode"
-                  value={formData.postalCode}
-                  onChange={handleChange}
-                  placeholder="e.g. 110001"
-                  required
-                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    State / राज्य
+                  </label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleChange}
+                    placeholder="e.g. Bihar"
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Country
-                </label>
-                <input
-                  type="text"
-                  name="country"
-                  value={formData.country}
-                  onChange={handleChange}
-                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    PIN Code / पिन कोड
+                  </label>
+                  <input
+                    type="text"
+                    name="postalCode"
+                    value={formData.postalCode}
+                    onChange={handleChange}
+                    placeholder="e.g. 852215"
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Emergency Contact */}
+            <div className="p-4 bg-amber-50/60 rounded-xl border border-amber-200/80 space-y-3">
+              <h3 className="text-xs font-bold text-amber-800 uppercase tracking-wider">
+                Emergency Contact / आपातकालीन संपर्क
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Contact Person Name / नाम
+                  </label>
+                  <input
+                    type="text"
+                    name="emergencyContactName"
+                    value={formData.emergencyContactName}
+                    onChange={handleChange}
+                    placeholder="Emergency contact person"
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Relationship / संबंध
+                  </label>
+                  <input
+                    type="text"
+                    name="emergencyContactRelation"
+                    value={formData.emergencyContactRelation}
+                    onChange={handleChange}
+                    placeholder="e.g. Uncle, Grandparent, Neighbor"
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Emergency Mobile / आपातकालीन मोबाइल
+                  </label>
+                  <input
+                    type="tel"
+                    name="emergencyContactMobile"
+                    value={formData.emergencyContactMobile}
+                    onChange={handleChange}
+                    placeholder="10-digit mobile"
+                    className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -733,58 +989,189 @@ export const NewAdmissionPage: React.FC = () => {
                 </select>
               </div>
 
+              {/* Transport Details Section */}
+              <div className="sm:col-span-2 pt-4 border-t border-slate-100">
+                <div className="p-4 bg-emerald-50/60 rounded-xl border border-emerald-200/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
+                        4. Transport Details / परिवहन विवरण
+                      </h3>
+                      <p className="text-xs text-slate-500">
+                        Does the student require daily school bus / van transport facility?
+                      </p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.transportRequired}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            transportRequired: e.target.checked,
+                          }))
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                      <span className="ml-2 text-xs font-bold text-slate-700">
+                        {formData.transportRequired ? 'Yes / हाँ' : 'No / नहीं'}
+                      </span>
+                    </label>
+                  </div>
+
+                  {formData.transportRequired && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Pickup Point / चढ़ने का स्थान <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          name="pickupPoint"
+                          value={formData.pickupPoint}
+                          onChange={handleChange}
+                          placeholder="e.g. Fakirna Chowk, Supaul Market"
+                          required={formData.transportRequired}
+                          className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Special Instructions / विशेष निर्देश
+                        </label>
+                        <input
+                          type="text"
+                          name="transportInstructions"
+                          value={formData.transportInstructions}
+                          onChange={handleChange}
+                          placeholder="Drop off person, safety instructions"
+                          className="w-full text-sm bg-white border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Documents Checklist Section */}
+              <div className="sm:col-span-2 pt-2">
+                <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-3">
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    5. Documents Checklist / आवश्यक दस्तावेज
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Check documents physically submitted or verified at the time of admission:
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <label className="flex items-center space-x-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+                      <input
+                        type="checkbox"
+                        checked={formData.docBirthCert}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, docBirthCert: e.target.checked }))
+                        }
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="text-slate-700 font-medium">Birth Cert. / जन्म प्रमाण</span>
+                    </label>
+
+                    <label className="flex items-center space-x-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+                      <input
+                        type="checkbox"
+                        checked={formData.docAadhaar}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, docAadhaar: e.target.checked }))
+                        }
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="text-slate-700 font-medium">Aadhaar Copy / आधार प्रति</span>
+                    </label>
+
+                    <label className="flex items-center space-x-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+                      <input
+                        type="checkbox"
+                        checked={formData.docPhotos}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, docPhotos: e.target.checked }))
+                        }
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="text-slate-700 font-medium">Photos / फोटो</span>
+                    </label>
+
+                    <label className="flex items-center space-x-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+                      <input
+                        type="checkbox"
+                        checked={formData.docReportCard}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, docReportCard: e.target.checked }))
+                        }
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="text-slate-700 font-medium">Report Card / अंक-पत्र</span>
+                    </label>
+
+                    <label className="flex items-center space-x-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+                      <input
+                        type="checkbox"
+                        checked={formData.docTC}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, docTC: e.target.checked }))
+                        }
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="text-slate-700 font-medium">Transfer Cert. / TC</span>
+                    </label>
+
+                    <label className="flex items-center space-x-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+                      <input
+                        type="checkbox"
+                        checked={formData.docParentId}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, docParentId: e.target.checked }))
+                        }
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="text-slate-700 font-medium">Parent ID / पहचान पत्र</span>
+                    </label>
+
+                    <label className="flex items-center space-x-2 p-2 bg-white rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+                      <input
+                        type="checkbox"
+                        checked={formData.docCasteEws}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, docCasteEws: e.target.checked }))
+                        }
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      />
+                      <span className="text-slate-700 font-medium">Caste/EWS / जाति प्रमाण</span>
+                    </label>
+
+                    <div className="flex items-center p-1 bg-white rounded-lg border border-slate-200">
+                      <input
+                        type="text"
+                        name="docOther"
+                        value={formData.docOther}
+                        onChange={handleChange}
+                        placeholder="Other / अन्य दस्तावेज"
+                        className="w-full text-xs px-2 py-1 bg-transparent focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Previous School Name (if any)
-                </label>
-                <input
-                  type="text"
-                  name="previousSchoolName"
-                  value={formData.previousSchoolName}
-                  onChange={handleChange}
-                  placeholder="e.g. St. Xavier High School"
-                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Previous Class / Grade
-                </label>
-                <input
-                  type="text"
-                  name="previousClass"
-                  value={formData.previousClass}
-                  onChange={handleChange}
-                  placeholder="e.g. Class 4"
-                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Previous Percentage / Marks
-                </label>
-                <input
-                  type="text"
-                  name="previousPercentage"
-                  value={formData.previousPercentage}
-                  onChange={handleChange}
-                  placeholder="e.g. 88.5%"
-                  className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                  Admission Notes / Remarks
+                  Admission Notes / Remarks / टिप्पणी
                 </label>
                 <textarea
                   name="remarks"
                   rows={2}
                   value={formData.remarks}
                   onChange={handleChange}
-                  placeholder="Special considerations, concessions, transport requirements..."
+                  placeholder="Special considerations, fee concession notes, medical info..."
                   className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
               </div>
@@ -796,16 +1183,16 @@ export const NewAdmissionPage: React.FC = () => {
         {currentStep === 5 && (
           <div className="space-y-6">
             <div className="border-b border-slate-100 pb-3">
-              <h2 className="text-base font-bold text-slate-900">Review Application Dossier</h2>
+              <h2 className="text-base font-bold text-slate-900">Review Application Dossier / आवेदन पूर्वावलोकन</h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Verify details before registering the application in the system
+                Verify all details as per Shishu Niketan Admission Form before registering
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                 <span className="font-semibold text-indigo-700 uppercase tracking-wider block">
-                  Student Information
+                  1. Student Details / विद्यार्थी विवरण
                 </span>
                 <p className="text-slate-800 font-bold text-sm">
                   {formData.firstName} {formData.middleName} {formData.lastName}
@@ -815,11 +1202,52 @@ export const NewAdmissionPage: React.FC = () => {
                   Blood Group: {formData.bloodGroup || 'N/A'} • Category: {formData.category}
                 </p>
                 <p className="text-slate-600">Aadhaar: {formData.aadhaarNumber || 'Not provided'}</p>
+                {formData.previousSchool && (
+                  <p className="text-slate-600">Prev School: {formData.previousSchool} ({formData.previousClassAndBoard || 'N/A'})</p>
+                )}
+                {formData.tcNumber && <p className="text-slate-600">TC No: {formData.tcNumber}</p>}
               </div>
 
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                 <span className="font-semibold text-indigo-700 uppercase tracking-wider block">
-                  Academic Allotment
+                  2. Parent & Contact Details / माता-पिता विवरण
+                </span>
+                {formData.fatherName && (
+                  <p className="text-slate-800 font-medium">
+                    Father: <span className="font-bold">{formData.fatherName}</span> ({formData.fatherOccupation || 'N/A'}) • {formData.fatherMobile || 'N/A'}
+                  </p>
+                )}
+                {formData.motherName && (
+                  <p className="text-slate-800 font-medium">
+                    Mother: <span className="font-bold">{formData.motherName}</span> ({formData.motherOccupation || 'N/A'}) • {formData.motherMobile || 'N/A'}
+                  </p>
+                )}
+                {formData.guardianName && (
+                  <p className="text-slate-700">Guardian: {formData.guardianName} • {formData.guardianMobile}</p>
+                )}
+                {formData.parentEmail && <p className="text-slate-600">Email: {formData.parentEmail}</p>}
+              </div>
+
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                <span className="font-semibold text-indigo-700 uppercase tracking-wider block">
+                  3. Address & Emergency / पता एवं आपातकाल
+                </span>
+                <p className="text-slate-800 font-medium">
+                  {formData.villageTown}, P.O: {formData.postOffice || 'N/A'}, P.S: {formData.policeStation || 'N/A'}
+                </p>
+                <p className="text-slate-600">
+                  District: {formData.district || 'Supaul'}, State: {formData.state} - {formData.postalCode}
+                </p>
+                {formData.emergencyContactName && (
+                  <p className="text-amber-800 font-medium pt-1 border-t border-slate-200">
+                    Emergency: {formData.emergencyContactName} ({formData.emergencyContactRelation}) • {formData.emergencyContactMobile}
+                  </p>
+                )}
+              </div>
+
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                <span className="font-semibold text-indigo-700 uppercase tracking-wider block">
+                  4. Academic & Transport / कक्षा एवं परिवहन
                 </span>
                 <p className="text-slate-800 font-bold text-sm">
                   Class: {classes.find((c) => c.id === formData.applyingClassId)?.name || 'N/A'}
@@ -827,35 +1255,20 @@ export const NewAdmissionPage: React.FC = () => {
                 <p className="text-slate-600">
                   Session: {sessions.find((s) => s.id === formData.academicSessionId)?.name || 'N/A'}
                 </p>
-                {formData.previousSchoolName && (
-                  <p className="text-slate-600">Prev School: {formData.previousSchoolName}</p>
-                )}
-              </div>
-
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-                <span className="font-semibold text-indigo-700 uppercase tracking-wider block">
-                  Parent / Guardian Contact
-                </span>
-                <p className="text-slate-800 font-bold text-sm">
-                  {formData.parentName} ({formData.parentRelation})
-                </p>
-                <p className="text-slate-600">Mobile: {formData.parentMobile}</p>
-                {formData.parentEmail && <p className="text-slate-600">Email: {formData.parentEmail}</p>}
-                {formData.parentOccupation && (
-                  <p className="text-slate-600">Occupation: {formData.parentOccupation}</p>
-                )}
-              </div>
-
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
-                <span className="font-semibold text-indigo-700 uppercase tracking-wider block">
-                  Residential Address
-                </span>
-                <p className="text-slate-800 font-medium">
-                  {formData.addressLine1}
-                  {formData.addressLine2 ? `, ${formData.addressLine2}` : ''}
+                <p className="text-emerald-700 font-semibold">
+                  Transport Required: {formData.transportRequired ? `Yes (Pickup: ${formData.pickupPoint})` : 'No'}
                 </p>
                 <p className="text-slate-600">
-                  {formData.city}, {formData.state} — {formData.postalCode}
+                  Documents Verified: {[
+                    formData.docBirthCert && 'Birth Cert',
+                    formData.docAadhaar && 'Aadhaar',
+                    formData.docPhotos && 'Photos',
+                    formData.docReportCard && 'Report Card',
+                    formData.docTC && 'TC',
+                    formData.docParentId && 'Parent ID',
+                    formData.docCasteEws && 'Caste/EWS',
+                    formData.docOther && formData.docOther,
+                  ].filter(Boolean).join(', ') || 'None selected'}
                 </p>
               </div>
             </div>

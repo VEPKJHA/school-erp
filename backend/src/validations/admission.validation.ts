@@ -23,6 +23,11 @@ export const createAdmissionSchema = z.object({
   religion: z.string().optional(),
   aadhaarNumber: z.string().max(50).optional(),
 
+  // Academic & Previous School Details
+  previousSchool: z.string().max(200).optional(),
+  previousClassAndBoard: z.string().max(100).optional(),
+  tcNumber: z.string().max(100).optional(),
+
   // Parent / Guardian Details
   parentName: z.string().min(1, 'Parent/Guardian name is required').max(150),
   parentRelation: z.enum(['FATHER', 'MOTHER', 'GUARDIAN']).default('FATHER'),
@@ -30,12 +35,39 @@ export const createAdmissionSchema = z.object({
   parentEmail: z.string().email().optional().or(z.literal('')),
   parentOccupation: z.string().max(100).optional(),
 
+  // Specific Parent & Guardian Details
+  fatherName: z.string().max(150).optional(),
+  fatherOccupation: z.string().max(100).optional(),
+  fatherMobile: z.string().max(50).optional(),
+  motherName: z.string().max(150).optional(),
+  motherOccupation: z.string().max(100).optional(),
+  motherMobile: z.string().max(50).optional(),
+  guardianName: z.string().max(150).optional(),
+  guardianMobile: z.string().max(50).optional(),
+
   // Address
   addressLine1: z.string().min(1, 'Address line 1 is required').max(255),
   addressLine2: z.string().max(255).optional(),
-  city: z.string().min(1, 'City is required').max(100),
+  villageTown: z.string().max(150).optional(),
+  postOffice: z.string().max(100).optional(),
+  policeStation: z.string().max(100).optional(),
+  district: z.string().max(100).optional(),
+  city: z.string().min(1, 'City/District is required').max(100),
   state: z.string().min(1, 'State is required').max(100),
   postalCode: z.string().min(1, 'Postal code is required').max(20),
+
+  // Emergency Contact
+  emergencyContactName: z.string().max(150).optional(),
+  emergencyContactRelation: z.string().max(50).optional(),
+  emergencyContactMobile: z.string().max(50).optional(),
+
+  // Transport Details
+  transportRequired: z.boolean().optional().default(false),
+  pickupPoint: z.string().max(150).optional(),
+  transportInstructions: z.string().max(500).optional(),
+
+  // Documents Checklist
+  documentsChecklist: z.string().optional(),
 });
 
 export const approveAdmissionSchema = z.object({

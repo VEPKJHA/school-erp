@@ -73,17 +73,44 @@ export class AdmissionService {
       religion: data.religion,
       aadhaarNumber: data.aadhaarNumber,
 
+      // Academic & Previous School Details
+      previousSchool: data.previousSchool?.trim() || null,
+      previousClassAndBoard: data.previousClassAndBoard?.trim() || null,
+      tcNumber: data.tcNumber?.trim() || null,
+
       parentName: data.parentName.trim(),
       parentRelation: data.parentRelation,
       parentMobile: data.parentMobile.trim(),
       parentEmail: data.parentEmail?.trim() || null,
       parentOccupation: data.parentOccupation?.trim(),
 
+      fatherName: data.fatherName?.trim() || null,
+      fatherOccupation: data.fatherOccupation?.trim() || null,
+      fatherMobile: data.fatherMobile?.trim() || null,
+      motherName: data.motherName?.trim() || null,
+      motherOccupation: data.motherOccupation?.trim() || null,
+      motherMobile: data.motherMobile?.trim() || null,
+      guardianName: data.guardianName?.trim() || null,
+      guardianMobile: data.guardianMobile?.trim() || null,
+
       addressLine1: data.addressLine1.trim(),
       addressLine2: data.addressLine2?.trim(),
+      villageTown: data.villageTown?.trim() || null,
+      postOffice: data.postOffice?.trim() || null,
+      policeStation: data.policeStation?.trim() || null,
+      district: data.district?.trim() || null,
       city: data.city.trim(),
       state: data.state.trim(),
       postalCode: data.postalCode.trim(),
+
+      emergencyContactName: data.emergencyContactName?.trim() || null,
+      emergencyContactRelation: data.emergencyContactRelation?.trim() || null,
+      emergencyContactMobile: data.emergencyContactMobile?.trim() || null,
+
+      transportRequired: Boolean(data.transportRequired),
+      pickupPoint: data.pickupPoint?.trim() || null,
+      transportInstructions: data.transportInstructions?.trim() || null,
+      documentsChecklist: data.documentsChecklist || null,
     });
 
     await AuditService.log({
