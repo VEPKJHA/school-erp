@@ -19,7 +19,7 @@ export const createStudentSchema = z.object({
   aadhaarNumber: z.string().max(50).optional(),
   email: z.string().email().optional().or(z.literal('')),
   mobile: z.string().max(50).optional(),
-  photoUrl: z.string().url().optional().or(z.literal('')),
+  photoUrl: z.string().optional().or(z.literal('')),
 
   transportRequired: z.boolean().optional(),
   pickupPoint: z.string().max(150).optional(),
@@ -66,7 +66,7 @@ export const updateStudentSchema = z.object({
   aadhaarNumber: z.string().max(50).optional(),
   email: z.string().email().optional().or(z.literal('')),
   mobile: z.string().max(50).optional(),
-  photoUrl: z.string().url().optional().or(z.literal('')),
+  photoUrl: z.string().optional().or(z.literal('')),
   transportRequired: z.boolean().optional(),
   pickupPoint: z.string().max(150).optional(),
   transportDistanceKm: z.number().nonnegative().optional(),

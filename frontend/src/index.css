@@ -86,3 +86,70 @@ body {
     display: table-footer-group !important;
   }
 }
+
+/* =========================================================
+   STUDENT ID CARD CR80 & A4 GRID PRINTING ENGINE
+   ========================================================= */
+.print-only {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  /* Each A4 sheet container */
+  .a4-print-sheet {
+    display: grid !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    width: 194mm !important;
+    height: 281mm !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
+    align-content: start !important;
+    justify-content: center !important;
+  }
+
+  /* Landscape CR80: 2 cols x 4 rows = 8 cards */
+  .landscape-grid {
+    grid-template-columns: repeat(2, 85.6mm) !important;
+    grid-template-rows: repeat(4, 53.98mm) !important;
+    column-gap: 4mm !important;
+    row-gap: 4mm !important;
+  }
+
+  /* Portrait CR80: 3 cols x 3 rows = 9 cards */
+  .portrait-grid {
+    grid-template-columns: repeat(3, 53.98mm) !important;
+    grid-template-rows: repeat(3, 85.6mm) !important;
+    column-gap: 3.5mm !important;
+    row-gap: 3.5mm !important;
+  }
+
+  .card-cell {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .id-card-element {
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

@@ -11,6 +11,7 @@ import { ClassesPage } from '../pages/classes/ClassesPage';
 import { SectionsPage } from '../pages/classes/SectionsPage';
 import { UsersPage } from '../pages/users/UsersPage';
 import { StudentsListPage } from '../pages/students/StudentsListPage';
+import { StudentIdCardPage } from '../pages/students/StudentIdCardPage';
 import { AdmissionsListPage } from '../pages/admissions/AdmissionsListPage';
 import { NewAdmissionPage } from '../pages/admissions/NewAdmissionPage';
 import { FeeDashboardPage } from '../pages/fees/FeeDashboardPage';
@@ -72,6 +73,7 @@ export const AppRoutes: React.FC = () => {
             element={<ProtectedRoute requiredPermission="student:read" />}
           >
             <Route path="/students" element={<StudentsListPage />} />
+            <Route path="/id-cards" element={<StudentIdCardPage />} />
           </Route>
 
           <Route

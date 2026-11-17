@@ -10,6 +10,10 @@ const router = (0, express_1.Router)();
 router.use(auth_middleware_1.authenticate, tenant_middleware_1.enforceTenant);
 router.get('/my-school', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SCHOOL_READ), school_controller_1.SchoolController.getProfile);
 router.put('/my-school', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SCHOOL_UPDATE), school_controller_1.SchoolController.updateProfile);
+router.get('/platform-overview', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SCHOOL_READ), school_controller_1.SchoolController.getPlatformStats);
 router.get('/', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SCHOOL_READ), school_controller_1.SchoolController.listSchools);
+router.post('/', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SCHOOL_UPDATE), school_controller_1.SchoolController.createSchool);
+router.patch('/:id/toggle-status', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SCHOOL_UPDATE), school_controller_1.SchoolController.toggleSchoolStatus);
+router.get('/:id/admins', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SCHOOL_READ), school_controller_1.SchoolController.getSchoolAdmins);
 exports.default = router;
 //# sourceMappingURL=school.routes.js.map

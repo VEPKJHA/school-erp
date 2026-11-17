@@ -20,7 +20,11 @@ exports.createStudentSchema = zod_1.z.object({
     aadhaarNumber: zod_1.z.string().max(50).optional(),
     email: zod_1.z.string().email().optional().or(zod_1.z.literal('')),
     mobile: zod_1.z.string().max(50).optional(),
-    photoUrl: zod_1.z.string().url().optional().or(zod_1.z.literal('')),
+    photoUrl: zod_1.z.string().optional().or(zod_1.z.literal('')),
+    transportRequired: zod_1.z.boolean().optional(),
+    pickupPoint: zod_1.z.string().max(150).optional(),
+    transportDistanceKm: zod_1.z.number().nonnegative().optional(),
+    transportSlab: zod_1.z.string().max(50).optional(),
     // Parent/Guardian (optional during quick creation)
     parent: zod_1.z
         .object({
@@ -59,7 +63,11 @@ exports.updateStudentSchema = zod_1.z.object({
     aadhaarNumber: zod_1.z.string().max(50).optional(),
     email: zod_1.z.string().email().optional().or(zod_1.z.literal('')),
     mobile: zod_1.z.string().max(50).optional(),
-    photoUrl: zod_1.z.string().url().optional().or(zod_1.z.literal('')),
+    photoUrl: zod_1.z.string().optional().or(zod_1.z.literal('')),
+    transportRequired: zod_1.z.boolean().optional(),
+    pickupPoint: zod_1.z.string().max(150).optional(),
+    transportDistanceKm: zod_1.z.number().nonnegative().optional(),
+    transportSlab: zod_1.z.string().max(50).optional(),
 });
 exports.updateStudentStatusSchema = zod_1.z.object({
     status: zod_1.z.enum([

@@ -18,5 +18,9 @@ exports.ENV = {
     CLIENT_URL: process.env.CLIENT_URL || process.env.CORS_ORIGIN || 'http://localhost:3000',
     COOKIE_SECURE: process.env.NODE_ENV === 'production',
     COOKIE_DOMAIN: process.env.COOKIE_DOMAIN || undefined,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+    REDIS_HOST: process.env.REDIS_HOST || '127.0.0.1',
+    REDIS_PORT: parseInt(process.env.REDIS_PORT || '6379', 10),
+    REDIS_PASSWORD: process.env.REDIS_PASSWORD || undefined,
 };
 //# sourceMappingURL=env.js.map

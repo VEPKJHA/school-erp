@@ -182,6 +182,24 @@ class FeeService {
         if (!student) {
             throw new Error('Student not found or belongs to another institution');
         }
+        // Determine normalized billing period or fallback to trimmed title
+        const billingPeriod = (data.billingPeriod || data.title).trim();
+        // Idempotency check: check if an active invoice for this student, session and billing period already exists
+        const existingInvoice = await prisma_1.prisma.feeInvoice.findFirst({
+            where: {
+                schoolId,
+                studentId: data.studentId,
+                academicSessionId: data.academicSessionId,
+                status: { notIn: ['VOID', 'CANCELLED'] },
+                OR: [
+                    { billingPeriod },
+                    { title: data.title.trim() },
+                ],
+            },
+        });
+        if (existingInvoice) {
+            throw new Error(`Invoice already exists for student ${student.firstName} ${student.lastName} for period "${data.title}" (Invoice #${existingInvoice.invoiceNumber}). Duplicate generation skipped.`);
+        }
         // Validate heads
         const headIds = data.items.map((i) => i.feeHeadId);
         const validHeads = await prisma_1.prisma.feeHead.findMany({
@@ -208,6 +226,7 @@ class FeeService {
                     academicSessionId: data.academicSessionId,
                     invoiceNumber,
                     title: data.title,
+                    billingPeriod,
                     dueDate: new Date(data.dueDate),
                     subtotal: new client_1.Prisma.Decimal(subtotal),
                     discountAmount: new client_1.Prisma.Decimal(discount),
@@ -250,7 +269,7 @@ class FeeService {
                 },
             });
             return inv;
-        });
+        }, { maxWait: 15000, timeout: 30000 });
         await audit_service_1.AuditService.log({
             schoolId,
             userId,
@@ -262,10 +281,6 @@ class FeeService {
         return invoice;
     }
     static async bulkGenerateInvoices(schoolId, data, userId) {
-        const structure = await fee_repository_1.FeeRepository.findFeeStructureById(data.feeStructureId, schoolId);
-        if (!structure) {
-            throw new Error('Fee structure template not found');
-        }
         const studentWhere = {
             schoolId,
             classId: data.classId,
@@ -274,31 +289,139 @@ class FeeService {
         if (data.sectionId) {
             studentWhere.sectionId = data.sectionId;
         }
+        // Fetch all active/admitted students in the target class
         const students = await prisma_1.prisma.student.findMany({
             where: studentWhere,
             include: {
                 feeAssignments: {
-                    where: { feeStructureId: data.feeStructureId, isActive: true },
+                    where: { isActive: true },
+                    include: {
+                        feeStructure: {
+                            include: {
+                                items: { include: { feeHead: true } },
+                            },
+                        },
+                    },
                 },
             },
         });
         if (students.length === 0) {
             throw new Error('No students found in the selected class/section for fee generation');
         }
+        // If a specific feeStructureId was selected, load it as the default structure for students
+        let defaultStructure = null;
+        if (data.feeStructureId && data.feeStructureId !== 'AUTO') {
+            defaultStructure = await fee_repository_1.FeeRepository.findFeeStructureById(data.feeStructureId, schoolId);
+            if (!defaultStructure) {
+                throw new Error('Selected fee structure template not found');
+            }
+        }
+        else {
+            // Find default active structure for this class and session
+            defaultStructure = await prisma_1.prisma.feeStructure.findFirst({
+                where: {
+                    schoolId,
+                    classId: data.classId,
+                    academicSessionId: data.academicSessionId,
+                    isActive: true,
+                },
+                include: {
+                    items: { include: { feeHead: true } },
+                },
+            });
+        }
+        const billingPeriod = (data.billingPeriod || data.title).trim();
+        // Check for students who ALREADY have an invoice for this title/billing period
+        const existingInvoices = await prisma_1.prisma.feeInvoice.findMany({
+            where: {
+                schoolId,
+                studentId: { in: students.map((s) => s.id) },
+                academicSessionId: data.academicSessionId,
+                status: { notIn: ['VOID', 'CANCELLED'] },
+                OR: [
+                    { billingPeriod },
+                    { title: data.title.trim() },
+                ],
+            },
+            select: { studentId: true },
+        });
+        const alreadyBilledStudentIds = new Set(existingInvoices.map((i) => i.studentId));
         let generatedCount = 0;
-        const year = new Date().getFullYear();
+        let skippedCount = 0;
         for (const student of students) {
-            const assignment = student.feeAssignments[0];
-            const concessionAmount = assignment ? Number(assignment.concessionAmount) : 0;
-            const items = structure.items.map((it) => ({
-                feeHeadId: it.feeHeadId,
-                description: it.feeHead.name,
-                amount: Number(it.amount),
-            }));
+            // Idempotency: Skip student if already billed for this billing cycle
+            if (alreadyBilledStudentIds.has(student.id)) {
+                skippedCount++;
+                continue;
+            }
+            // Determine applicable structure:
+            // 1. Student's individual assigned structure (if any)
+            // 2. Default class structure (fallback)
+            const assignment = student.feeAssignments?.[0];
+            const structure = assignment?.feeStructure || defaultStructure;
+            if (!structure) {
+                // Skip students if no fee structure can be determined
+                continue;
+            }
+            const concessionAmount = assignment ? Number(assignment.concessionAmount || 0) : 0;
+            // Filter items: If student didn't opt for transport (transportRequired is false),
+            // omit any fee head containing 'transport' or 'bus' or 'van'
+            // If student takes transport, calculate transport fee based on distance slabs:
+            // 0-10 km: ₹1800, 10-20 km: ₹2000, 20+ km: ₹2200 (or distance-based computation)
+            const items = [];
+            for (const it of structure.items) {
+                const headName = (it.feeHead?.name || '').toLowerCase();
+                const headCode = (it.feeHead?.code || '').toLowerCase();
+                const isTransportHead = headName.includes('transport') ||
+                    headName.includes('bus') ||
+                    headName.includes('van') ||
+                    headCode.includes('transport') ||
+                    headCode.includes('bus');
+                if (isTransportHead) {
+                    if (!student.transportRequired) {
+                        // Student is not taking transport; skip transport fee
+                        continue;
+                    }
+                    // Calculate transport fee based on slab or distance
+                    let transportAmount = Number(it.amount);
+                    const slab = (student.transportSlab || '').trim().toLowerCase();
+                    const dist = student.transportDistanceKm != null ? Number(student.transportDistanceKm) : null;
+                    if (slab === '0-10' || slab === '0-10 km' || (dist !== null && dist > 0 && dist <= 10)) {
+                        transportAmount = 1800;
+                    }
+                    else if (slab === '10-20' ||
+                        slab === '10-20 km' ||
+                        (dist !== null && dist > 10 && dist <= 20)) {
+                        transportAmount = 2000;
+                    }
+                    else if (slab === '20+' ||
+                        slab === '20+ km' ||
+                        slab === '20-30' ||
+                        slab === '20-30 km' ||
+                        (dist !== null && dist > 20)) {
+                        transportAmount = 2200;
+                    }
+                    items.push({
+                        feeHeadId: it.feeHeadId,
+                        description: `${it.feeHead.name} (${student.transportSlab || (dist ? `${dist} km` : 'Standard')})`,
+                        amount: transportAmount,
+                    });
+                    continue;
+                }
+                items.push({
+                    feeHeadId: it.feeHeadId,
+                    description: it.feeHead.name,
+                    amount: Number(it.amount),
+                });
+            }
+            if (items.length === 0) {
+                continue;
+            }
             await this.generateInvoice(schoolId, {
                 studentId: student.id,
                 academicSessionId: data.academicSessionId,
                 title: data.title,
+                billingPeriod,
                 dueDate: data.dueDate,
                 discountAmount: concessionAmount,
                 lateFeeAmount: 0,
@@ -306,7 +429,10 @@ class FeeService {
             }, userId);
             generatedCount++;
         }
-        return { generatedCount, totalEligible: students.length };
+        if (generatedCount === 0 && skippedCount === 0) {
+            throw new Error('No invoices generated. Please ensure a fee structure exists for this class or is assigned to students.');
+        }
+        return { generatedCount, skippedCount, totalEligible: students.length };
     }
     // ==========================================
     // 5. FEE COLLECTION & RECEIPT ISSUANCE

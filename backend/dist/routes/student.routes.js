@@ -15,5 +15,6 @@ router.post('/', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSI
 router.get('/:id', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.STUDENT_READ), student_controller_1.StudentController.getStudentById);
 router.put('/:id', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.STUDENT_UPDATE), (0, validate_middleware_1.validate)(student_validation_1.updateStudentSchema), student_controller_1.StudentController.updateStudent);
 router.patch('/:id/status', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.STUDENT_UPDATE), (0, validate_middleware_1.validate)(student_validation_1.updateStudentStatusSchema), student_controller_1.StudentController.updateStatus);
+router.patch('/:id/photo', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.STUDENT_UPDATE), student_controller_1.StudentController.updatePhoto);
 exports.default = router;
 //# sourceMappingURL=student.routes.js.map

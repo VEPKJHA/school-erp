@@ -102,6 +102,10 @@ export class StudentRepository {
             where: { isPrimaryContact: true },
             include: { parent: { select: { firstName: true, lastName: true, phone: true } } },
           },
+          addresses: {
+            where: { addressType: 'CURRENT' },
+            take: 1,
+          },
         },
       }),
     ]);

@@ -79,6 +79,21 @@ class StudentController {
             return apiResponse_1.ResponseUtil.badRequest(res, error.message);
         }
     }
+    static async updatePhoto(req, res, next) {
+        try {
+            const schoolId = req.schoolId;
+            const { id } = req.params;
+            const { photoUrl } = req.body;
+            if (photoUrl === undefined) {
+                return apiResponse_1.ResponseUtil.badRequest(res, 'photoUrl is required');
+            }
+            const updated = await student_service_1.StudentService.updateStudent(id, schoolId, { photoUrl }, req.user?.userId);
+            return apiResponse_1.ResponseUtil.success(res, updated, 'Student photo updated successfully');
+        }
+        catch (error) {
+            return apiResponse_1.ResponseUtil.badRequest(res, error.message);
+        }
+    }
 }
 exports.StudentController = StudentController;
 //# sourceMappingURL=student.controller.js.map

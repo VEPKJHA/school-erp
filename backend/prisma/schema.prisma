@@ -313,7 +313,7 @@ model Student {
   aadhaarNumber String?       @map("aadhaar_number") @db.VarChar(50)
   email         String?       @db.VarChar(191)
   mobile        String?       @db.VarChar(50)
-  photoUrl          String?       @map("photo_url") @db.VarChar(500)
+  photoUrl          String?       @map("photo_url") @db.LongText
   transportRequired Boolean       @default(false) @map("transport_required")
   pickupPoint       String?       @map("pickup_point") @db.VarChar(150)
   transportDistanceKm Float?      @map("transport_distance_km")

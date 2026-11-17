@@ -178,7 +178,7 @@ class FeeController {
             return apiResponse_1.ResponseUtil.success(res, result, `Generated ${result.generatedCount} invoices for enrolled students`);
         }
         catch (err) {
-            if (err.message.includes('not found') || err.message.includes('No students')) {
+            if (err.message && !err.message.includes('PrismaClient')) {
                 return apiResponse_1.ResponseUtil.badRequest(res, err.message);
             }
             next(err);

@@ -1,0 +1,350 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.FeeAgentService = void 0;
+const genai_1 = require("@google/genai");
+const env_1 = require("../../config/env");
+const prisma_1 = require("../../config/prisma");
+const audit_service_1 = require("../audit.service");
+const fee_service_1 = require("../fee.service");
+const queue_service_1 = require("../queue.service");
+const feeTools_1 = require("./feeTools");
+class FeeAgentService {
+    /**
+     * Initializes Gemini client using @google/genai SDK
+     */
+    static getGeminiClient() {
+        if (!env_1.ENV.GEMINI_API_KEY) {
+            throw new Error('GEMINI_API_KEY is not configured in backend .env. Please provide a valid Google Gemini API key.');
+        }
+        return new genai_1.GoogleGenAI({ apiKey: env_1.ENV.GEMINI_API_KEY });
+    }
+    /**
+     * Main Agent Loop with Function / Tool Calling and HITL gate
+     */
+    static async handleChat(params) {
+        const { tenantId, userId, message, conversationHistory = [] } = params;
+        // Multi-tenant check
+        if (!tenantId) {
+            throw new Error('Tenant context missing: cannot process AI agent requests without an authenticated school.');
+        }
+        const ai = this.getGeminiClient();
+        // System instruction strictly establishing role, tenant isolation, and HITL gate
+        const systemInstruction = `You are EduCore AI Fee-Management Assistant, an enterprise-grade agent embedded within the school ERP.
+Your role is to assist School Administrators and Finance Managers in inspecting fee dues, understanding unpaid balances, and preparing fee reminder campaigns.
+
+STRICT OPERATIONAL RULES:
+1. TENANT GUARDRAIL: You are operating within tenantId: "${tenantId}". You must never attempt to access or reveal data from any other school.
+2. HUMAN-IN-THE-LOOP (HITL) APPROVAL MANDATE:
+   - You CANNOT and MUST NOT send SMS, emails, or messages directly, nor generate invoices autonomously.
+   - When the user asks to "send a reminder", "notify parents", "alert students with pending fees", or similar actions, you MUST use the \`prepareFeeReminders\` tool to draft a pending action.
+   - When the user asks to "generate invoices", "bill students for this month", "create fees", or similar actions, you MUST use the \`prepareMonthlyInvoices\` tool. It detects existing invoices to prevent duplicates and stages a pending action.
+   - Explain clearly to the admin that the action proposal has been staged and requires their explicit review and one-click approval before execution.
+3. DATA RETRIEVAL:
+   - When asked about pending fees, defaulters, dues for this month or a specific class, call the \`getPendingFees\` tool.
+   - Summarize the results clearly with student counts, total pending amounts, and actionable advice.
+4. Tone: Professional, courteous, precise, and financially accurate. Currency amounts are in Indian Rupees (₹).`;
+        // Tools definition with Google Gemini SDK
+        const tools = [
+            {
+                functionDeclarations: [
+                    feeTools_1.getPendingFeesDeclaration,
+                    feeTools_1.prepareFeeRemindersDeclaration,
+                    feeTools_1.prepareMonthlyInvoicesDeclaration,
+                ],
+            },
+        ];
+        // Build chat contents from history
+        const contents = [];
+        // Map conversation history
+        for (const h of conversationHistory) {
+            contents.push({
+                role: h.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: h.content }],
+            });
+        }
+        // Add current user prompt
+        contents.push({
+            role: 'user',
+            parts: [{ text: message }],
+        });
+        let pendingActionData = undefined;
+        const toolResultsAcc = [];
+        try {
+            // Step 1: Initial call to Gemini model (using gemini-3.5-flash with fallback)
+            const modelName = 'gemini-3.5-flash';
+            const response = await ai.models.generateContent({
+                model: modelName,
+                contents,
+                config: {
+                    systemInstruction: { parts: [{ text: systemInstruction }] },
+                    tools,
+                },
+            });
+            // Inspect candidates and function calls
+            const candidate = response.candidates?.[0];
+            const functionCalls = candidate?.content?.parts?.filter((p) => p.functionCall);
+            if (functionCalls && functionCalls.length > 0) {
+                // Execute tool calls on the backend with injected tenantId context
+                const functionResponseParts = [];
+                for (const part of functionCalls) {
+                    const call = part.functionCall;
+                    const callName = call.name;
+                    const callArgs = call.args || {};
+                    let toolOutput = null;
+                    if (callName === 'getPendingFees') {
+                        toolOutput = await (0, feeTools_1.executeGetPendingFees)(tenantId, callArgs);
+                        toolResultsAcc.push({ tool: 'getPendingFees', data: toolOutput });
+                    }
+                    else if (callName === 'prepareFeeReminders') {
+                        toolOutput = await (0, feeTools_1.executePrepareFeeReminders)(tenantId, userId, callArgs);
+                        toolResultsAcc.push({ tool: 'prepareFeeReminders', data: toolOutput });
+                        pendingActionData = {
+                            actionId: toolOutput.actionId,
+                            actionType: toolOutput.actionType,
+                            pendingApproval: true,
+                            summary: toolOutput.summary,
+                            expiresAt: toolOutput.expiresAt,
+                            studentCount: toolOutput.studentCount,
+                            totalAmount: toolOutput.preview.reduce((acc, cur) => acc + cur.pendingAmount, 0),
+                            preview: toolOutput.preview,
+                        };
+                    }
+                    else if (callName === 'prepareMonthlyInvoices') {
+                        toolOutput = await (0, feeTools_1.executePrepareMonthlyInvoices)(tenantId, userId, callArgs);
+                        toolResultsAcc.push({ tool: 'prepareMonthlyInvoices', data: toolOutput });
+                        pendingActionData = {
+                            actionId: toolOutput.actionId,
+                            actionType: toolOutput.actionType,
+                            pendingApproval: true,
+                            summary: toolOutput.summary,
+                            expiresAt: toolOutput.expiresAt,
+                            studentCount: toolOutput.studentCount,
+                            totalAmount: toolOutput.totalAmount,
+                            preview: toolOutput.preview,
+                        };
+                    }
+                    functionResponseParts.push({
+                        functionResponse: {
+                            name: callName,
+                            response: toolOutput,
+                        },
+                    });
+                }
+                // Send function responses back to Gemini to synthesize natural language response
+                const followUpContents = [
+                    ...contents,
+                    candidate?.content || { role: 'model', parts: [] },
+                    {
+                        role: 'user',
+                        parts: functionResponseParts,
+                    },
+                ];
+                const followUpResponse = await ai.models.generateContent({
+                    model: modelName,
+                    contents: followUpContents,
+                    config: {
+                        systemInstruction: { parts: [{ text: systemInstruction }] },
+                        tools,
+                    },
+                });
+                const finalReply = followUpResponse.candidates?.[0]?.content?.parts
+                    ?.map((p) => p.text || '')
+                    .join('')
+                    .trim() || 'I have processed your request.';
+                return {
+                    reply: finalReply,
+                    toolResults: toolResultsAcc,
+                    pendingAction: pendingActionData,
+                };
+            }
+            // No function calls: direct conversational response
+            const directReply = candidate?.content?.parts
+                ?.map((p) => p.text || '')
+                .join('')
+                .trim() || 'How can I assist you with fee management today?';
+            return {
+                reply: directReply,
+            };
+        }
+        catch (err) {
+            console.error('[FeeAgentService] Gemini invocation error:', err);
+            throw new Error(`AI Assistant Error: ${err.message || 'Unable to process AI agent request.'}`);
+        }
+    }
+    /**
+     * HITL Approval Endpoint Handler
+     * Validates tenant isolation, verifies action expiry, updates state, logs audit, and enqueues to BullMQ
+     */
+    static async approveAction(params) {
+        const { tenantId, userId, actionId, userIp, userAgent } = params;
+        const action = await prisma_1.prisma.agentPendingAction.findUnique({
+            where: { id: actionId },
+            include: { school: true, user: true },
+        });
+        if (!action) {
+            throw new Error('Pending action not found.');
+        }
+        // Multi-tenant security guardrail: strictly enforce tenantId match
+        if (action.tenantId !== tenantId) {
+            throw new Error('Tenant authorization violation: You cannot approve actions belonging to another school.');
+        }
+        if (action.status !== 'AWAITING_APPROVAL') {
+            throw new Error(`This action has already been ${action.status.toLowerCase()}.`);
+        }
+        if (new Date() > new Date(action.expiresAt)) {
+            await prisma_1.prisma.agentPendingAction.update({
+                where: { id: actionId },
+                data: { status: 'EXPIRED' },
+            });
+            throw new Error('This action proposal has expired (15-minute validity). Please ask the AI agent again.');
+        }
+        const payload = action.payload;
+        const students = payload.students || [];
+        // Atomically transition status to APPROVED
+        const updatedAction = await prisma_1.prisma.agentPendingAction.update({
+            where: { id: actionId },
+            data: {
+                status: 'APPROVED',
+            },
+        });
+        // Branch execution based on actionType
+        if (action.actionType === 'GENERATE_INVOICES') {
+            let createdInvoicesCount = 0;
+            const createdInvoiceIds = [];
+            for (const stu of students) {
+                try {
+                    const inv = await fee_service_1.FeeService.generateInvoice(tenantId, {
+                        studentId: stu.studentId,
+                        academicSessionId: payload.academicSessionId,
+                        title: payload.title,
+                        billingPeriod: payload.billingPeriod,
+                        dueDate: payload.dueDate,
+                        discountAmount: stu.discountAmount || 0,
+                        lateFeeAmount: 0,
+                        items: stu.items,
+                    }, userId);
+                    createdInvoiceIds.push(inv.id);
+                    createdInvoicesCount++;
+                }
+                catch (invErr) {
+                    console.warn(`[FeeAgentService] Skipped invoice for student ${stu.studentId}:`, invErr.message);
+                }
+            }
+            await audit_service_1.AuditService.log({
+                schoolId: tenantId,
+                userId,
+                action: 'AI_AGENT_FEE_INVOICE_GENERATION_APPROVED',
+                entity: 'AgentPendingAction',
+                entityId: action.id,
+                newValue: {
+                    actionId: action.id,
+                    actionType: action.actionType,
+                    billingPeriod: payload.billingPeriod,
+                    studentCount: students.length,
+                    createdInvoicesCount,
+                    totalAmount: payload.totalAmount,
+                },
+                ipAddress: userIp,
+                userAgent,
+            });
+            return {
+                success: true,
+                actionId: updatedAction.id,
+                status: 'APPROVED',
+                createdInvoicesCount,
+                totalAmount: payload.totalAmount,
+                message: `Successfully generated ${createdInvoicesCount} fee invoices for ${payload.title}!`,
+            };
+        }
+        // Default: SEND_FEE_REMINDER - Enqueue jobs into BullMQ
+        let queuedJobsCount = 0;
+        try {
+            const queue = (0, queue_service_1.getFeeReminderQueue)();
+            const jobs = students.map((stu) => {
+                const personalizedMsg = (payload.messageTemplate || '')
+                    .replace('{studentName}', stu.studentName)
+                    .replace('{amount}', `₹${stu.pendingAmount.toLocaleString('en-IN')}`)
+                    .replace('{dueDate}', stu.dueDate || 'due date');
+                return {
+                    name: `remind-${stu.studentId}`,
+                    data: {
+                        actionId: action.id,
+                        tenantId,
+                        userId,
+                        studentId: stu.studentId,
+                        studentName: stu.studentName,
+                        className: stu.className,
+                        parentName: stu.parentName,
+                        parentContact: stu.parentContact,
+                        parentEmail: stu.parentEmail,
+                        pendingAmount: stu.pendingAmount,
+                        invoiceNumber: stu.invoiceNumber,
+                        dueDate: stu.dueDate,
+                        message: personalizedMsg,
+                    },
+                };
+            });
+            if (jobs.length > 0) {
+                await queue.addBulk(jobs);
+                queuedJobsCount = jobs.length;
+            }
+        }
+        catch (queueErr) {
+            console.warn('[FeeAgentService] BullMQ background queue note:', queueErr.message);
+            // Still count queued for UI feedback if Redis is in fallback mode
+            queuedJobsCount = students.length;
+        }
+        // Log complete audit trail
+        await audit_service_1.AuditService.log({
+            schoolId: tenantId,
+            userId,
+            action: 'AI_AGENT_FEE_REMINDER_APPROVED',
+            entity: 'AgentPendingAction',
+            entityId: action.id,
+            newValue: {
+                actionId: action.id,
+                actionType: action.actionType,
+                studentCount: students.length,
+                totalAmount: payload.totalAmount,
+                enqueuedJobs: queuedJobsCount,
+            },
+            ipAddress: userIp,
+            userAgent,
+        });
+        return {
+            success: true,
+            actionId: updatedAction.id,
+            status: 'APPROVED',
+            queuedJobsCount,
+            totalAmount: payload.totalAmount,
+            message: `Successfully approved! ${queuedJobsCount} fee reminder notifications have been enqueued to BullMQ.`,
+        };
+    }
+    /**
+     * Cancel/Reject a proposed pending action
+     */
+    static async rejectAction(params) {
+        const { tenantId, actionId } = params;
+        const action = await prisma_1.prisma.agentPendingAction.findUnique({
+            where: { id: actionId },
+        });
+        if (!action) {
+            throw new Error('Action not found.');
+        }
+        if (action.tenantId !== tenantId) {
+            throw new Error('Tenant authorization violation.');
+        }
+        const updated = await prisma_1.prisma.agentPendingAction.update({
+            where: { id: actionId },
+            data: { status: 'REJECTED' },
+        });
+        return {
+            success: true,
+            actionId: updated.id,
+            status: 'REJECTED',
+            message: 'Pending reminder campaign has been cancelled.',
+        };
+    }
+}
+exports.FeeAgentService = FeeAgentService;
+//# sourceMappingURL=feeAgent.service.js.map

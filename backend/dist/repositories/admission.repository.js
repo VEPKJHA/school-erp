@@ -128,6 +128,12 @@ class AdmissionRepository {
                     aadhaarNumber: admission.aadhaarNumber,
                     mobile: admission.parentMobile,
                     email: admission.parentEmail,
+                    transportRequired: admission.transportRequired,
+                    pickupPoint: admission.pickupPoint,
+                    transportDistanceKm: admission.transportDistanceKm,
+                    transportSlab: admission.transportSlab,
+                    tcNumber: admission.tcNumber,
+                    previousSchool: admission.previousSchool,
                     status: 'ACTIVE',
                 },
             });
@@ -197,7 +203,7 @@ class AdmissionRepository {
                 admission: updatedAdmission,
                 student,
             };
-        });
+        }, { maxWait: 10000, timeout: 30000 });
     }
 }
 exports.AdmissionRepository = AdmissionRepository;

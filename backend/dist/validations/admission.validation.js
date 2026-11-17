@@ -23,18 +23,47 @@ exports.createAdmissionSchema = zod_1.z.object({
     category: zod_1.z.string().optional(),
     religion: zod_1.z.string().optional(),
     aadhaarNumber: zod_1.z.string().max(50).optional(),
+    // Academic & Previous School Details
+    previousSchool: zod_1.z.string().max(200).optional(),
+    previousClassAndBoard: zod_1.z.string().max(100).optional(),
+    tcNumber: zod_1.z.string().max(100).optional(),
     // Parent / Guardian Details
     parentName: zod_1.z.string().min(1, 'Parent/Guardian name is required').max(150),
     parentRelation: zod_1.z.enum(['FATHER', 'MOTHER', 'GUARDIAN']).default('FATHER'),
     parentMobile: zod_1.z.string().min(5, 'Parent contact number is required').max(50),
     parentEmail: zod_1.z.string().email().optional().or(zod_1.z.literal('')),
     parentOccupation: zod_1.z.string().max(100).optional(),
+    // Specific Parent & Guardian Details
+    fatherName: zod_1.z.string().max(150).optional(),
+    fatherOccupation: zod_1.z.string().max(100).optional(),
+    fatherMobile: zod_1.z.string().max(50).optional(),
+    motherName: zod_1.z.string().max(150).optional(),
+    motherOccupation: zod_1.z.string().max(100).optional(),
+    motherMobile: zod_1.z.string().max(50).optional(),
+    guardianName: zod_1.z.string().max(150).optional(),
+    guardianMobile: zod_1.z.string().max(50).optional(),
     // Address
     addressLine1: zod_1.z.string().min(1, 'Address line 1 is required').max(255),
     addressLine2: zod_1.z.string().max(255).optional(),
-    city: zod_1.z.string().min(1, 'City is required').max(100),
+    villageTown: zod_1.z.string().max(150).optional(),
+    postOffice: zod_1.z.string().max(100).optional(),
+    policeStation: zod_1.z.string().max(100).optional(),
+    district: zod_1.z.string().max(100).optional(),
+    city: zod_1.z.string().min(1, 'City/District is required').max(100),
     state: zod_1.z.string().min(1, 'State is required').max(100),
     postalCode: zod_1.z.string().min(1, 'Postal code is required').max(20),
+    // Emergency Contact
+    emergencyContactName: zod_1.z.string().max(150).optional(),
+    emergencyContactRelation: zod_1.z.string().max(50).optional(),
+    emergencyContactMobile: zod_1.z.string().max(50).optional(),
+    // Transport Details
+    transportRequired: zod_1.z.boolean().optional().default(false),
+    pickupPoint: zod_1.z.string().max(150).optional(),
+    transportDistanceKm: zod_1.z.number().nonnegative().optional(),
+    transportSlab: zod_1.z.string().max(50).optional(),
+    transportInstructions: zod_1.z.string().max(500).optional(),
+    // Documents Checklist
+    documentsChecklist: zod_1.z.string().optional(),
 });
 exports.approveAdmissionSchema = zod_1.z.object({
     assignedSectionId: zod_1.z.string().min(1, 'Section allotment is required to finalize admission'),

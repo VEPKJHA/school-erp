@@ -101,4 +101,24 @@ export class StudentController {
       return ResponseUtil.badRequest(res, error.message);
     }
   }
+
+  static async updatePhoto(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const schoolId = req.schoolId!;
+      const { id } = req.params;
+      const { photoUrl } = req.body;
+      if (photoUrl === undefined) {
+        return ResponseUtil.badRequest(res, 'photoUrl is required');
+      }
+      const updated = await StudentService.updateStudent(
+        id,
+        schoolId,
+        { photoUrl },
+        req.user?.userId
+      );
+      return ResponseUtil.success(res, updated, 'Student photo updated successfully');
+    } catch (error: any) {
+      return ResponseUtil.badRequest(res, error.message);
+    }
+  }
 }

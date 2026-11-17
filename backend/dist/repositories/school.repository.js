@@ -19,6 +19,11 @@ class SchoolRepository {
             data,
         });
     }
+    static async create(data) {
+        return prisma_1.prisma.school.create({
+            data,
+        });
+    }
     static async findAll(page = 1, pageSize = 20, search) {
         const where = {};
         if (search) {
@@ -35,6 +40,21 @@ class SchoolRepository {
                 skip: (page - 1) * pageSize,
                 take: pageSize,
                 orderBy: { name: 'asc' },
+                include: {
+                    _count: {
+                        select: {
+                            students: true,
+                            users: true,
+                            academicSessions: true,
+                            feeInvoices: true,
+                        },
+                    },
+                    academicSessions: {
+                        where: { isCurrent: true },
+                        take: 1,
+                        select: { id: true, name: true, startDate: true, endDate: true },
+                    },
+                },
             }),
         ]);
         return { total, schools };

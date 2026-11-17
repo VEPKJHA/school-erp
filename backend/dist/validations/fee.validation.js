@@ -58,6 +58,7 @@ exports.createInvoiceSchema = zod_1.z.object({
     studentId: zod_1.z.string().min(1, 'Student is required'),
     academicSessionId: zod_1.z.string().min(1, 'Academic session is required'),
     title: zod_1.z.string().min(1, 'Invoice title is required').max(255),
+    billingPeriod: zod_1.z.string().max(50).optional(),
     dueDate: zod_1.z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: 'Valid due date is required (YYYY-MM-DD)',
     }),
@@ -70,8 +71,9 @@ exports.bulkGenerateInvoicesSchema = zod_1.z.object({
     classId: zod_1.z.string().min(1, 'Class is required'),
     sectionId: zod_1.z.string().optional(),
     academicSessionId: zod_1.z.string().min(1, 'Academic session is required'),
-    feeStructureId: zod_1.z.string().min(1, 'Fee structure is required'),
+    feeStructureId: zod_1.z.string().optional(), // Now optional
     title: zod_1.z.string().min(1, 'Invoice title is required').max(255),
+    billingPeriod: zod_1.z.string().max(50).optional(),
     dueDate: zod_1.z.string().refine((val) => !isNaN(Date.parse(val)), {
         message: 'Valid due date is required (YYYY-MM-DD)',
     }),

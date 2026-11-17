@@ -17,6 +17,7 @@ import {
   Loader2,
   CheckCircle2,
   DollarSign,
+  CreditCard,
 } from 'lucide-react';
 import { StudentService } from '../../services/student.service';
 import { ClassService } from '../../services/class.service';
@@ -311,6 +312,13 @@ export const StudentsListPage: React.FC = () => {
           >
             <Eye className="w-4 h-4" />
           </button>
+          <button
+            onClick={() => navigate('/id-cards')}
+            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+            title="Generate ID Card"
+          >
+            <CreditCard className="w-4 h-4" />
+          </button>
           {hasPermission('fee:assignment:create') && (
             <button
               onClick={() => handleOpenFeeAssignModal(row)}
@@ -348,15 +356,24 @@ export const StudentsListPage: React.FC = () => {
             <span className="font-semibold text-slate-700">{total}</span>
           </p>
         </div>
-        {hasPermission('admission:create') && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => navigate('/admissions/new')}
-            className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-sm shadow-indigo-600/20 transition-all cursor-pointer"
+            onClick={() => navigate('/id-cards')}
+            className="flex items-center space-x-2 px-3.5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-xl font-medium shadow-xs transition-all cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>New Admission</span>
+            <CreditCard className="w-4 h-4 text-indigo-600" />
+            <span>ID Card Studio</span>
           </button>
-        )}
+          {hasPermission('admission:create') && (
+            <button
+              onClick={() => navigate('/admissions/new')}
+              className="flex items-center space-x-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-sm shadow-indigo-600/20 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>New Admission</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filter Row */}

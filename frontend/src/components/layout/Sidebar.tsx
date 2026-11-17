@@ -56,6 +56,12 @@ export const Sidebar: React.FC = () => {
       visible: hasPermission('student:read'),
     },
     {
+      label: 'Student ID Cards',
+      path: '/id-cards',
+      icon: CreditCard,
+      visible: hasPermission('student:read'),
+    },
+    {
       label: 'Admissions',
       path: '/admissions',
       icon: FileText,

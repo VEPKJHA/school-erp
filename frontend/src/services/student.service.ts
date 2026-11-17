@@ -44,6 +44,11 @@ export const StudentService = {
     return res.data?.data;
   },
 
+  async updatePhoto(id: string, photoUrl: string): Promise<Student> {
+    const res = await api.patch(`/students/${id}/photo`, { photoUrl });
+    return res.data?.data;
+  },
+
   async getDocuments(studentId: string): Promise<StudentDocument[]> {
     const res = await api.get(`/documents/student/${studentId}`);
     return res.data?.data || [];

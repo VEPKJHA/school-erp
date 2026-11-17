@@ -13,10 +13,17 @@ const student_routes_1 = __importDefault(require("./student.routes"));
 const admission_routes_1 = __importDefault(require("./admission.routes"));
 const parent_routes_1 = __importDefault(require("./parent.routes"));
 const document_routes_1 = __importDefault(require("./document.routes"));
+const fee_routes_1 = __importDefault(require("./fee.routes"));
+const staff_routes_1 = __importDefault(require("./staff.routes"));
+const attendance_routes_1 = __importDefault(require("./attendance.routes"));
+const exam_routes_1 = __importDefault(require("./exam.routes"));
+const timetable_routes_1 = __importDefault(require("./timetable.routes"));
+const aiAgent_routes_1 = __importDefault(require("./aiAgent.routes"));
 const auth_middleware_1 = require("../middleware/auth.middleware");
 const tenant_middleware_1 = require("../middleware/tenant.middleware");
 const prisma_1 = require("../config/prisma");
 const apiResponse_1 = require("../utils/apiResponse");
+const user_controller_1 = require("../controllers/user.controller");
 const router = (0, express_1.Router)();
 // Health Check
 router.get('/health', (req, res) => {
@@ -27,11 +34,22 @@ router.use('/auth', auth_routes_1.default);
 router.use('/academic-sessions', academic_routes_1.default);
 router.use('/', class_routes_1.default); // /classes and /sections
 router.use('/users', user_routes_1.default);
+// Top-level aliases for roles and permissions
+router.get('/roles', auth_middleware_1.authenticate, tenant_middleware_1.enforceTenant, user_controller_1.UserController.getRoles);
+router.post('/roles', auth_middleware_1.authenticate, tenant_middleware_1.enforceTenant, user_controller_1.UserController.createRole);
+router.put('/roles/:id/permissions', auth_middleware_1.authenticate, tenant_middleware_1.enforceTenant, user_controller_1.UserController.updateRolePermissions);
+router.get('/permissions', auth_middleware_1.authenticate, tenant_middleware_1.enforceTenant, user_controller_1.UserController.getPermissions);
 router.use('/schools', school_routes_1.default);
 router.use('/students', student_routes_1.default);
 router.use('/admissions', admission_routes_1.default);
 router.use('/parents', parent_routes_1.default);
 router.use('/documents', document_routes_1.default);
+router.use('/fees', fee_routes_1.default);
+router.use('/staff', staff_routes_1.default);
+router.use('/attendance', attendance_routes_1.default);
+router.use('/exams', exam_routes_1.default);
+router.use('/timetable', timetable_routes_1.default);
+router.use('/ai-agent', aiAgent_routes_1.default);
 // Dashboard Live Stats Endpoint
 router.get('/dashboard/stats', auth_middleware_1.authenticate, tenant_middleware_1.enforceTenant, async (req, res) => {
     try {

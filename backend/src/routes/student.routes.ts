@@ -35,5 +35,10 @@ router.patch(
   validate(updateStudentStatusSchema),
   StudentController.updateStatus
 );
+router.patch(
+  '/:id/photo',
+  requirePermission(PERMISSIONS.STUDENT_UPDATE),
+  StudentController.updatePhoto
+);
 
 export default router;

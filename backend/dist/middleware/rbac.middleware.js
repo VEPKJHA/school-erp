@@ -7,7 +7,7 @@ const requirePermission = (...requiredPermissions) => {
         if (!req.user) {
             return apiResponse_1.ResponseUtil.unauthorized(res, 'Authentication required');
         }
-        if (req.user.roleCode === 'SUPER_ADMIN') {
+        if (req.user.roleCode === 'SUPER_ADMIN' || req.user.roleCode === 'SCHOOL_ADMIN') {
             return next();
         }
         const userPermissions = new Set(req.user.permissions || []);

@@ -32,9 +32,8 @@ next) => {
     if (err.statusCode && err.message) {
         return apiResponse_1.ResponseUtil.error(res, err.message, err.statusCode, err.errors || []);
     }
-    return apiResponse_1.ResponseUtil.error(res, env_1.ENV.NODE_ENV === 'production'
-        ? 'An unexpected internal server error occurred.'
-        : err.message || 'Internal server error');
+    console.error('[API Error]:', err);
+    return apiResponse_1.ResponseUtil.error(res, err.message || 'An unexpected internal server error occurred.', err.statusCode || 500);
 };
 exports.errorHandler = errorHandler;
 //# sourceMappingURL=errorHandler.js.map
