@@ -71,11 +71,25 @@ export const UsersPage: React.FC = () => {
         UserService.getRoles(),
         UserService.getPermissions().catch(() => []),
       ]);
-      setUsers(usersData);
-      setRoles(rolesData);
-      setPermissions(permsData);
+
+      const safeUsers = Array.isArray(usersData)
+        ? usersData
+        : (usersData as any)?.users || (usersData as any)?.data || [];
+      const safeRoles = Array.isArray(rolesData)
+        ? rolesData
+        : (rolesData as any)?.roles || (rolesData as any)?.data || [];
+      const safePerms = Array.isArray(permsData)
+        ? permsData
+        : (permsData as any)?.permissions || (permsData as any)?.data || [];
+
+      setUsers(safeUsers);
+      setRoles(safeRoles);
+      setPermissions(safePerms);
     } catch (err: any) {
       error(err.response?.data?.message || 'Failed to load staff list');
+      setUsers([]);
+      setRoles([]);
+      setPermissions([]);
     } finally {
       setIsLoading(false);
     }
@@ -175,7 +189,10 @@ export const UsersPage: React.FC = () => {
       setIsCreateRoleModalOpen(false);
       setRoleForm({ name: '', code: '', description: '', permissionCodes: [] });
       const updatedRoles = await UserService.getRoles();
-      setRoles(updatedRoles);
+      const safeRoles = Array.isArray(updatedRoles)
+        ? updatedRoles
+        : (updatedRoles as any)?.roles || (updatedRoles as any)?.data || [];
+      setRoles(safeRoles);
       // Auto-select in user form if open
       if (isModalOpen) {
         setForm((prev) => ({ ...prev, roleId: created.id }));
@@ -287,7 +304,7 @@ export const UsersPage: React.FC = () => {
             className="inline-flex items-center space-x-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors cursor-pointer border border-slate-200"
           >
             <Shield className="w-4 h-4 text-indigo-600" />
-            <span>Manage Roles ({roles.length})</span>
+            <span>Manage Roles ({Array.isArray(roles) ? roles.length : 0})</span>
           </button>
 
           {/* Create Custom Role Button */}
@@ -320,8 +337,8 @@ export const UsersPage: React.FC = () => {
             onChange={(e) => setSelectedRoleId(e.target.value)}
             className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
           >
-            <option value="">All Roles ({roles.length})</option>
-            {roles.map((r) => (
+            <option value="">All Roles ({Array.isArray(roles) ? roles.length : 0})</option>
+            {(Array.isArray(roles) ? roles : []).map((r) => (
               <option key={r.id} value={r.id}>
                 {r.name} ({r.code})
               </option>
@@ -457,8 +474,8 @@ export const UsersPage: React.FC = () => {
               onChange={(e) => setForm({ ...form, roleId: e.target.value })}
               className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
             >
-              <option value="">Select a Role ({roles.length} available)</option>
-              {roles.map((r) => (
+              <option value="">Select a Role ({Array.isArray(roles) ? roles.length : 0} available)</option>
+              {(Array.isArray(roles) ? roles : []).map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.name} ({r.code})
                 </option>
@@ -514,7 +531,7 @@ export const UsersPage: React.FC = () => {
           </div>
 
           <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden max-h-80 overflow-y-auto">
-            {roles.map((r) => {
+            {(Array.isArray(roles) ? roles : []).map((r) => {
               const permsCount = r.permissions?.length || r._count?.permissions || 0;
               const usersCount = r._count?.users || 0;
 

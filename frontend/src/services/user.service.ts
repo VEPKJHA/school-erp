@@ -4,7 +4,17 @@ import { User, Role } from '../types';
 export const UserService = {
   async getUsers(params?: { search?: string; roleId?: string }): Promise<User[]> {
     const res = await api.get('/users', { params });
-    return res.data?.data || [];
+    const payload = res.data?.data;
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+    if (payload && Array.isArray(payload.users)) {
+      return payload.users;
+    }
+    if (Array.isArray(res.data?.users)) {
+      return res.data.users;
+    }
+    return [];
   },
 
   async createUser(payload: {
@@ -39,12 +49,32 @@ export const UserService = {
 
   async getRoles(): Promise<Role[]> {
     const res = await api.get('/roles');
-    return res.data?.data || [];
+    const payload = res.data?.data;
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+    if (payload && Array.isArray(payload.roles)) {
+      return payload.roles;
+    }
+    if (Array.isArray(res.data?.roles)) {
+      return res.data.roles;
+    }
+    return [];
   },
 
   async getPermissions(): Promise<Array<{ id: string; code: string; module: string; action: string; description: string }>> {
     const res = await api.get('/permissions');
-    return res.data?.data || [];
+    const payload = res.data?.data;
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+    if (payload && Array.isArray(payload.permissions)) {
+      return payload.permissions;
+    }
+    if (Array.isArray(res.data?.permissions)) {
+      return res.data.permissions;
+    }
+    return [];
   },
 
   async createRole(payload: {
