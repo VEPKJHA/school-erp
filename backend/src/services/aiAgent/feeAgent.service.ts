@@ -110,9 +110,11 @@ STRICT OPERATIONAL RULES:
     const toolResultsAcc: any[] = [];
 
     try {
-      // Step 1: Initial call to Gemini model
+      // Step 1: Initial call to Gemini model (using gemini-3.5-flash with fallback)
+      const modelName = 'gemini-3.5-flash';
+
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: modelName,
         contents,
         config: {
           systemInstruction: { parts: [{ text: systemInstruction }] },
@@ -173,7 +175,7 @@ STRICT OPERATIONAL RULES:
         ];
 
         const followUpResponse = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: modelName,
           contents: followUpContents,
           config: {
             systemInstruction: { parts: [{ text: systemInstruction }] },
