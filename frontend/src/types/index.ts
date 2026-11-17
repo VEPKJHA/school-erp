@@ -63,6 +63,20 @@ export interface Role {
   code: string;
   description?: string;
   isSystem: boolean;
+  schoolId?: string | null;
+  permissions?: Array<{
+    permission: {
+      id: string;
+      code: string;
+      module: string;
+      action: string;
+      description: string;
+    };
+  }>;
+  _count?: {
+    users: number;
+    permissions: number;
+  };
 }
 
 export interface DashboardStats {

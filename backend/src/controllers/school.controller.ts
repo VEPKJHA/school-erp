@@ -4,6 +4,7 @@ import { AuthenticatedRequest } from '../middleware/auth.middleware';
 import { ResponseUtil } from '../utils/apiResponse';
 import { AuditService } from '../services/audit.service';
 import { prisma } from '../config/prisma';
+import { RoleProvisioningService } from '../services/roleProvisioning.service';
 import bcrypt from 'bcryptjs';
 
 export class SchoolController {
@@ -92,21 +93,8 @@ export class SchoolController {
       const { adminUser, ...schoolData } = req.body;
       const newSchool = await SchoolRepository.create(schoolData);
 
-      // Create base roles
-      const baseRoles = [
-        { code: 'SCHOOL_ADMIN', name: 'School Administrator', description: 'Full authority', isSystem: true },
-        { code: 'PRINCIPAL', name: 'Principal', description: 'Academic head', isSystem: false },
-        { code: 'ACCOUNTANT', name: 'Accountant', description: 'Finance', isSystem: false },
-        { code: 'TEACHER', name: 'Teacher', description: 'Class teacher', isSystem: false },
-      ];
-
-      const rolesMap: Record<string, string> = {};
-      for (const r of baseRoles) {
-        const createdRole = await prisma.role.create({
-          data: { ...r, schoolId: newSchool.id }
-        });
-        rolesMap[r.code] = createdRole.id;
-      }
+      // Auto-provision complete set of default tenant roles & permissions
+      const rolesMap = await RoleProvisioningService.provisionDefaultRolesForSchool(newSchool.id);
 
       // Create default admin
       const defaultPassword = 'Admin@12345';

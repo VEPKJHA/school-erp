@@ -2,11 +2,17 @@ import app from './app';
 import { ENV } from './config/env';
 import { prisma } from './config/prisma';
 import { initFeeReminderWorker } from './services/queue.service';
+import { RoleProvisioningService } from './services/roleProvisioning.service';
 
 const startServer = async () => {
   try {
     await prisma.$connect();
     console.log('✅ Connected to Database');
+
+    // Run safe role backfill to ensure all tenants have complete default roles & permissions
+    RoleProvisioningService.backfillAllSchools().catch((err: any) =>
+      console.warn('⚠️ Role backfill note:', err.message)
+    );
   } catch (error: any) {
     console.warn('⚠️ Warning: Database connection not established yet:', error.message);
   }

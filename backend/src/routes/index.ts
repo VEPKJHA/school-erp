@@ -18,6 +18,7 @@ import { authenticate, AuthenticatedRequest } from '../middleware/auth.middlewar
 import { enforceTenant } from '../middleware/tenant.middleware';
 import { prisma } from '../config/prisma';
 import { ResponseUtil } from '../utils/apiResponse';
+import { UserController } from '../controllers/user.controller';
 
 const router = Router();
 
@@ -31,6 +32,11 @@ router.use('/auth', authRoutes);
 router.use('/academic-sessions', academicRoutes);
 router.use('/', classRoutes); // /classes and /sections
 router.use('/users', userRoutes);
+// Top-level aliases for roles and permissions
+router.get('/roles', authenticate, enforceTenant, UserController.getRoles);
+router.post('/roles', authenticate, enforceTenant, UserController.createRole);
+router.put('/roles/:id/permissions', authenticate, enforceTenant, UserController.updateRolePermissions);
+router.get('/permissions', authenticate, enforceTenant, UserController.getPermissions);
 router.use('/schools', schoolRoutes);
 router.use('/students', studentRoutes);
 router.use('/admissions', admissionRoutes);

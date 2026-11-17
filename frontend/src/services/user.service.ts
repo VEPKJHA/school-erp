@@ -38,7 +38,27 @@ export const UserService = {
   },
 
   async getRoles(): Promise<Role[]> {
-    const res = await api.get('/users/roles');
+    const res = await api.get('/roles');
     return res.data?.data || [];
+  },
+
+  async getPermissions(): Promise<Array<{ id: string; code: string; module: string; action: string; description: string }>> {
+    const res = await api.get('/permissions');
+    return res.data?.data || [];
+  },
+
+  async createRole(payload: {
+    name: string;
+    code: string;
+    description?: string;
+    permissionCodes?: string[];
+  }): Promise<Role> {
+    const res = await api.post('/roles', payload);
+    return res.data?.data;
+  },
+
+  async updateRolePermissions(roleId: string, permissionCodes: string[]): Promise<Role> {
+    const res = await api.put(`/roles/${roleId}/permissions`, { permissionCodes });
+    return res.data?.data;
   },
 };

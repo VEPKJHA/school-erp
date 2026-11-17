@@ -159,6 +159,142 @@ export class UserService {
         code: true,
         description: true,
         isSystem: true,
+        schoolId: true,
+        permissions: {
+          select: {
+            permission: {
+              select: {
+                id: true,
+                code: true,
+                module: true,
+                action: true,
+                description: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            users: true,
+            permissions: true,
+          },
+        },
+      },
+    });
+  }
+
+  static async createCustomRole(
+    schoolId: string,
+    data: {
+      name: string;
+      code: string;
+      description?: string;
+      permissionCodes?: string[];
+    },
+    actorId?: string
+  ) {
+    // Check if role code already exists for this school
+    const normalizedCode = data.code.trim().toUpperCase().replace(/\s+/g, '_');
+    const existing = await prisma.role.findFirst({
+      where: {
+        schoolId,
+        code: normalizedCode,
+      },
+    });
+
+    if (existing) {
+      throw new Error(`Role with code "${normalizedCode}" already exists for this institution`);
+    }
+
+    // Resolve permissions by code
+    let permissionIds: string[] = [];
+    if (data.permissionCodes && data.permissionCodes.length > 0) {
+      const perms = await prisma.permission.findMany({
+        where: { code: { in: data.permissionCodes } },
+        select: { id: true },
+      });
+      permissionIds = perms.map((p) => p.id);
+    }
+
+    const newRole = await prisma.role.create({
+      data: {
+        schoolId,
+        code: normalizedCode,
+        name: data.name.trim(),
+        description: data.description?.trim(),
+        isSystem: false,
+        permissions: {
+          create: permissionIds.map((pId) => ({
+            permissionId: pId,
+          })),
+        },
+      },
+      include: {
+        permissions: {
+          include: { permission: true },
+        },
+      },
+    });
+
+    await AuditService.log({
+      schoolId,
+      userId: actorId,
+      action: 'ROLE_CREATED',
+      entity: 'Role',
+      entityId: newRole.id,
+      newValue: { code: newRole.code, name: newRole.name, permissionsCount: permissionIds.length },
+    });
+
+    return newRole;
+  }
+
+  static async updateRolePermissions(
+    roleId: string,
+    schoolId: string,
+    permissionCodes: string[],
+    actorId?: string
+  ) {
+    const role = await prisma.role.findFirst({
+      where: { id: roleId, schoolId },
+    });
+
+    if (!role) {
+      throw new Error('Role not found or cannot be modified');
+    }
+
+    // Resolve permissions
+    const perms = await prisma.permission.findMany({
+      where: { code: { in: permissionCodes } },
+      select: { id: true },
+    });
+    const permissionIds = perms.map((p) => p.id);
+
+    // Replace role permissions
+    await prisma.$transaction([
+      prisma.rolePermission.deleteMany({ where: { roleId } }),
+      prisma.rolePermission.createMany({
+        data: permissionIds.map((pId) => ({
+          roleId,
+          permissionId: pId,
+        })),
+      }),
+    ]);
+
+    await AuditService.log({
+      schoolId,
+      userId: actorId,
+      action: 'ROLE_PERMISSIONS_UPDATED',
+      entity: 'Role',
+      entityId: roleId,
+      newValue: { roleCode: role.code, permissionsCount: permissionIds.length },
+    });
+
+    return prisma.role.findUnique({
+      where: { id: roleId },
+      include: {
+        permissions: {
+          include: { permission: true },
+        },
       },
     });
   }

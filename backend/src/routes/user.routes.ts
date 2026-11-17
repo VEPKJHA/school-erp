@@ -11,6 +11,12 @@ const router = Router();
 
 router.use(authenticate, enforceTenant);
 
+// Roles & Permissions routes (accessible by school admin)
+router.get('/roles', requirePermission(PERMISSIONS.USER_READ), UserController.getRoles);
+router.post('/roles', requirePermission(PERMISSIONS.USER_CREATE), UserController.createRole);
+router.put('/roles/:id/permissions', requirePermission(PERMISSIONS.USER_UPDATE), UserController.updateRolePermissions);
+router.get('/permissions', requirePermission(PERMISSIONS.USER_READ), UserController.getPermissions);
+
 router.get('/', requirePermission(PERMISSIONS.USER_READ), UserController.getUsers);
 router.post(
   '/',

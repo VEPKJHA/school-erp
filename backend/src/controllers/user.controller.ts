@@ -73,5 +73,75 @@ export class UserController {
       next(err);
     }
   }
+
+  static async getRoles(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const schoolId = req.schoolId;
+      const roles = await UserService.getRoles(schoolId);
+      return ResponseUtil.success(res, roles, 'Roles retrieved');
+    } catch (err: any) {
+      next(err);
+    }
+  }
+
+  static async getPermissions(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { prisma } = await import('../config/prisma');
+      const permissions = await prisma.permission.findMany({
+        orderBy: [{ module: 'asc' }, { code: 'asc' }],
+        select: {
+          id: true,
+          code: true,
+          module: true,
+          action: true,
+          description: true,
+        },
+      });
+      return ResponseUtil.success(res, permissions, 'Permissions retrieved');
+    } catch (err: any) {
+      next(err);
+    }
+  }
+
+  static async createRole(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const schoolId = req.schoolId!;
+      const { name, code, description, permissionCodes } = req.body;
+      if (!name || !code) {
+        return ResponseUtil.badRequest(res, 'Role name and code are required');
+      }
+
+      const role = await UserService.createCustomRole(
+        schoolId,
+        { name, code, description, permissionCodes },
+        req.user?.id
+      );
+      return ResponseUtil.created(res, role, 'Custom role created successfully');
+    } catch (err: any) {
+      return ResponseUtil.badRequest(res, err.message);
+    }
+  }
+
+  static async updateRolePermissions(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const schoolId = req.schoolId!;
+      const roleId = req.params.id;
+      const { permissionCodes } = req.body;
+
+      if (!Array.isArray(permissionCodes)) {
+        return ResponseUtil.badRequest(res, 'permissionCodes must be an array of strings');
+      }
+
+      const updated = await UserService.updateRolePermissions(
+        roleId,
+        schoolId,
+        permissionCodes,
+        req.user?.id
+      );
+      return ResponseUtil.success(res, updated, 'Role permissions updated successfully');
+    } catch (err: any) {
+      return ResponseUtil.badRequest(res, err.message);
+    }
+  }
 }
 
