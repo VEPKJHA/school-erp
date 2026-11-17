@@ -13,6 +13,7 @@ import staffRoutes from './staff.routes';
 import attendanceRoutes from './attendance.routes';
 import examRoutes from './exam.routes';
 import timetableRoutes from './timetable.routes';
+import aiAgentRoutes from './aiAgent.routes';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.middleware';
 import { enforceTenant } from '../middleware/tenant.middleware';
 import { prisma } from '../config/prisma';
@@ -40,6 +41,7 @@ router.use('/staff', staffRoutes);
 router.use('/attendance', attendanceRoutes);
 router.use('/exams', examRoutes);
 router.use('/timetable', timetableRoutes);
+router.use('/ai-agent', aiAgentRoutes);
 
 // Dashboard Live Stats Endpoint
 router.get('/dashboard/stats', authenticate, enforceTenant, async (req: AuthenticatedRequest, res) => {

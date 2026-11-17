@@ -59,6 +59,7 @@ model School {
   examMarks             ExamMark[]
   leaveRequests         LeaveRequest[]
   payrolls              Payroll[]
+  agentPendingActions   AgentPendingAction[]
 
   @@map("schools")
 }
@@ -145,6 +146,7 @@ model User {
   enteredMarks      ExamMark[]
   leaveRequests     LeaveRequest[]
   payrolls          Payroll[]
+  agentPendingActions AgentPendingAction[]
   classSections     Section[]           @relation("ClassTeacher")
 
   @@unique([schoolId, email])
@@ -1074,4 +1076,35 @@ model Payroll {
 
   @@unique([schoolId, userId, month, year])
   @@map("payrolls")
+}
+
+// ==========================================
+// 14. AGENTIC AI & HITL PENDING ACTIONS
+// ==========================================
+
+enum AgentActionStatus {
+  AWAITING_APPROVAL
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+model AgentPendingAction {
+  id         String            @id @default(uuid())
+  tenantId   String            @map("tenant_id")
+  userId     String            @map("user_id")
+  actionType String            @map("action_type") @db.VarChar(100)
+  payload    Json
+  status     AgentActionStatus @default(AWAITING_APPROVAL)
+  expiresAt  DateTime          @map("expires_at")
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+
+  school School @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("agent_pending_actions")
 }

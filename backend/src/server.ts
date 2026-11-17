@@ -1,6 +1,7 @@
 import app from './app';
 import { ENV } from './config/env';
 import { prisma } from './config/prisma';
+import { initFeeReminderWorker } from './services/queue.service';
 
 const startServer = async () => {
   try {
@@ -8,6 +9,13 @@ const startServer = async () => {
     console.log('✅ Connected to Database');
   } catch (error: any) {
     console.warn('⚠️ Warning: Database connection not established yet:', error.message);
+  }
+
+  // Initialize BullMQ background workers if available
+  try {
+    initFeeReminderWorker();
+  } catch (err: any) {
+    console.warn('⚠️ BullMQ worker warning:', err.message);
   }
 
   const server = app.listen(ENV.PORT, () => {
