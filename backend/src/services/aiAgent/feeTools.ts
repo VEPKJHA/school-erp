@@ -62,6 +62,48 @@ export const prepareFeeRemindersDeclaration: FunctionDeclaration = {
   },
 };
 
+/**
+ * Tool 3: prepareMonthlyInvoices
+ * Inspects eligible active students in the tenant, determines who does NOT already have an invoice
+ * for the given billing period / month-year, and creates an AgentPendingAction (GENERATE_INVOICES)
+ * with status AWAITING_APPROVAL. DOES NOT create invoices directly without admin approval.
+ */
+export const prepareMonthlyInvoicesDeclaration: FunctionDeclaration = {
+  name: 'prepareMonthlyInvoices',
+  description:
+    'Analyzes active enrolled students and prepares a bulk monthly fee invoice generation proposal with duplicate protection. DOES NOT generate invoices directly; requires School Admin approval.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      month: {
+        type: Type.INTEGER,
+        description: 'Calendar month number (1 to 12) for the billing cycle. Defaults to current month.',
+      },
+      year: {
+        type: Type.INTEGER,
+        description: '4-digit calendar year (e.g. 2026). Defaults to current year.',
+      },
+      classId: {
+        type: Type.STRING,
+        description: 'Optional class ID or class name filter.',
+      },
+      studentId: {
+        type: Type.STRING,
+        description: 'Optional student ID to generate invoice for a single specific student.',
+      },
+      title: {
+        type: Type.STRING,
+        description: 'Optional custom invoice title/period description (e.g. "November 2026 Tuition Fee").',
+      },
+      dueDate: {
+        type: Type.STRING,
+        description: 'Optional payment due date in YYYY-MM-DD format (defaults to 10th of following/current month).',
+      },
+    },
+    required: [],
+  },
+};
+
 export interface StudentPendingFeeItem {
   studentId: string;
   studentName: string;
@@ -291,6 +333,289 @@ export async function executePrepareFeeReminders(
       studentId: s.studentId,
       studentName: s.studentName,
       className: `${s.className} ${s.sectionName}`.trim(),
+      parentContact: s.parentContact,
+      pendingAmount: s.pendingAmount,
+    })),
+  };
+}
+
+/**
+ * Tool Execution: prepareMonthlyInvoices
+ */
+export async function executePrepareMonthlyInvoices(
+  tenantId: string,
+  userId: string,
+  args: {
+    month?: number;
+    year?: number;
+    classId?: string;
+    studentId?: string;
+    title?: string;
+    dueDate?: string;
+  }
+): Promise<{
+  success: boolean;
+  actionId: string;
+  actionType: string;
+  pendingApproval: boolean;
+  studentCount: number;
+  totalAmount: number;
+  billingPeriod: string;
+  title: string;
+  expiresAt: string;
+  summary: string;
+  preview: Array<{
+    studentId: string;
+    studentName: string;
+    className: string;
+    parentContact: string;
+    pendingAmount: number;
+  }>;
+}> {
+  const now = new Date();
+  const targetYear = args.year || now.getFullYear();
+  const targetMonth = args.month || (now.getMonth() + 1);
+  const monthName = new Date(targetYear, targetMonth - 1, 1).toLocaleString('default', { month: 'long' });
+
+  const billingPeriod = `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
+  const invoiceTitle = (args.title || `${monthName} ${targetYear} Tuition & School Fee`).trim();
+
+  // Determine due date (e.g. 15th of current or specified month)
+  let calculatedDueDate = args.dueDate;
+  if (!calculatedDueDate) {
+    const dueDay = 15;
+    const dueMonthStr = String(targetMonth).padStart(2, '0');
+    calculatedDueDate = `${targetYear}-${dueMonthStr}-${String(dueDay).padStart(2, '0')}`;
+  }
+
+  // Find active academic session for this tenant
+  const activeSession = await prisma.academicSession.findFirst({
+    where: { schoolId: tenantId, status: 'ACTIVE' },
+  });
+
+  const sessionId = activeSession?.id;
+  if (!sessionId) {
+    throw new Error('No active academic session found for this school institution.');
+  }
+
+  // Query eligible active students under this tenant
+  const studentWhere: any = {
+    schoolId: tenantId,
+    status: { in: ['ACTIVE', 'ADMITTED'] },
+  };
+
+  if (args.studentId) {
+    studentWhere.id = args.studentId;
+  }
+
+  if (args.classId) {
+    // If passed name instead of uuid, check class
+    const matchedClass = await prisma.class.findFirst({
+      where: {
+        schoolId: tenantId,
+        OR: [{ id: args.classId }, { name: { contains: args.classId } }],
+      },
+    });
+    if (matchedClass) {
+      studentWhere.classId = matchedClass.id;
+    } else {
+      studentWhere.classId = args.classId;
+    }
+  }
+
+  const eligibleStudents = await prisma.student.findMany({
+    where: studentWhere,
+    include: {
+      class: true,
+      section: true,
+      parents: {
+        include: { parent: true },
+      },
+      feeAssignments: {
+        where: { isActive: true },
+        include: {
+          feeStructure: {
+            include: {
+              items: { include: { feeHead: true } },
+            },
+          },
+        },
+      },
+    },
+    orderBy: [{ class: { name: 'asc' } }, { firstName: 'asc' }],
+  });
+
+  if (eligibleStudents.length === 0) {
+    throw new Error('No active students found matching the specified criteria.');
+  }
+
+  // Query existing invoices for this period/title to PREVENT DUPLICATES
+  const existingInvoices = await prisma.feeInvoice.findMany({
+    where: {
+      schoolId: tenantId,
+      studentId: { in: eligibleStudents.map((s) => s.id) },
+      academicSessionId: sessionId,
+      status: { notIn: ['VOID', 'CANCELLED'] },
+      OR: [{ billingPeriod }, { title: invoiceTitle }],
+    },
+    select: { studentId: true },
+  });
+
+  const alreadyBilledStudentIds = new Set(existingInvoices.map((inv) => inv.studentId));
+
+  // Filter students who are NOT yet billed
+  const studentsToBill = eligibleStudents.filter((stu) => !alreadyBilledStudentIds.has(stu.id));
+
+  if (studentsToBill.length === 0) {
+    throw new Error(
+      `All ${eligibleStudents.length} student(s) matching criteria have ALREADY been invoiced for ${invoiceTitle} (${billingPeriod}). No duplicate invoices needed.`
+    );
+  }
+
+  // Fetch class default fee structures for students without direct assignment
+  const defaultStructures = await prisma.feeStructure.findMany({
+    where: {
+      schoolId: tenantId,
+      academicSessionId: sessionId,
+      isActive: true,
+    },
+    include: {
+      items: { include: { feeHead: true } },
+    },
+  });
+
+  const structureByClassId = new Map(defaultStructures.map((s) => [s.classId, s]));
+
+  // Build invoice proposals per student
+  const billingItemsPreview: Array<{
+    studentId: string;
+    studentName: string;
+    className: string;
+    parentContact: string;
+    pendingAmount: number;
+    items: Array<{ feeHeadId: string; description: string; amount: number }>;
+    discountAmount: number;
+  }> = [];
+
+  for (const stu of studentsToBill) {
+    const assignment = stu.feeAssignments?.[0];
+    const structure = assignment?.feeStructure || structureByClassId.get(stu.classId);
+
+    if (!structure || !structure.items || structure.items.length === 0) {
+      continue;
+    }
+
+    const concession = assignment ? Number(assignment.concessionAmount || 0) : 0;
+    const items: Array<{ feeHeadId: string; description: string; amount: number }> = [];
+
+    for (const it of structure.items) {
+      const headName = (it.feeHead?.name || '').toLowerCase();
+      const headCode = (it.feeHead?.code || '').toLowerCase();
+      const isTransportHead =
+        headName.includes('transport') ||
+        headName.includes('bus') ||
+        headName.includes('van') ||
+        headCode.includes('transport') ||
+        headCode.includes('bus');
+
+      if (isTransportHead) {
+        if (!stu.transportRequired) continue;
+        let transportAmount = Number(it.amount);
+        const slab = (stu.transportSlab || '').trim().toLowerCase();
+        const dist = stu.transportDistanceKm != null ? Number(stu.transportDistanceKm) : null;
+
+        if (slab === '0-10' || slab === '0-10 km' || (dist !== null && dist > 0 && dist <= 10)) {
+          transportAmount = 1800;
+        } else if (slab === '10-20' || slab === '10-20 km' || (dist !== null && dist > 10 && dist <= 20)) {
+          transportAmount = 2000;
+        } else if (slab === '20+' || slab === '20+ km' || slab === '20-30' || (dist !== null && dist > 20)) {
+          transportAmount = 2200;
+        }
+
+        items.push({
+          feeHeadId: it.feeHeadId,
+          description: `${it.feeHead.name} (${stu.transportSlab || (dist ? `${dist} km` : 'Standard')})`,
+          amount: transportAmount,
+        });
+        continue;
+      }
+
+      items.push({
+        feeHeadId: it.feeHeadId,
+        description: it.feeHead.name,
+        amount: Number(it.amount),
+      });
+    }
+
+    if (items.length === 0) continue;
+
+    const subtotal = items.reduce((acc, i) => acc + i.amount, 0);
+    const invoiceTotal = Math.max(0, subtotal - concession);
+
+    const primaryParent = stu.parents?.[0]?.parent;
+    const parentContact = primaryParent?.phone || primaryParent?.email || 'N/A';
+
+    billingItemsPreview.push({
+      studentId: stu.id,
+      studentName: `${stu.firstName} ${stu.lastName}`.trim(),
+      className: `${stu.class?.name || ''} ${stu.section?.name || ''}`.trim(),
+      parentContact,
+      pendingAmount: invoiceTotal,
+      items,
+      discountAmount: concession,
+    });
+  }
+
+  if (billingItemsPreview.length === 0) {
+    throw new Error('Could not compute fee structures for the eligible students. Please configure fee structures first.');
+  }
+
+  const totalBillingAmount = billingItemsPreview.reduce((sum, s) => sum + s.pendingAmount, 0);
+
+  const payload = {
+    actionType: 'GENERATE_INVOICES',
+    academicSessionId: sessionId,
+    billingPeriod,
+    title: invoiceTitle,
+    dueDate: calculatedDueDate,
+    studentCount: billingItemsPreview.length,
+    alreadyBilledSkipped: alreadyBilledStudentIds.size,
+    totalAmount: totalBillingAmount,
+    students: billingItemsPreview,
+  };
+
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  const pendingAction = await prisma.agentPendingAction.create({
+    data: {
+      tenantId,
+      userId,
+      actionType: 'GENERATE_INVOICES',
+      status: 'AWAITING_APPROVAL',
+      payload,
+      expiresAt,
+    },
+  });
+
+  const summary = `Prepared draft invoice generation for **${billingItemsPreview.length} student(s)** for period **${invoiceTitle}** (Total: **₹${totalBillingAmount.toLocaleString('en-IN')}**). ${
+    alreadyBilledStudentIds.size > 0 ? `(${alreadyBilledStudentIds.size} already invoiced students skipped). ` : ''
+  }Awaiting School Admin approval to generate.`;
+
+  return {
+    success: true,
+    actionId: pendingAction.id,
+    actionType: 'GENERATE_INVOICES',
+    pendingApproval: true,
+    studentCount: billingItemsPreview.length,
+    totalAmount: totalBillingAmount,
+    billingPeriod,
+    title: invoiceTitle,
+    expiresAt: expiresAt.toISOString(),
+    summary,
+    preview: billingItemsPreview.map((s) => ({
+      studentId: s.studentId,
+      studentName: s.studentName,
+      className: s.className,
       parentContact: s.parentContact,
       pendingAmount: s.pendingAmount,
     })),

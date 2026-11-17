@@ -184,7 +184,8 @@ export const InvoicesListPage: React.FC = () => {
       }
 
       const res = await FeeService.bulkGenerateInvoices(payload);
-      success(`Generated ${res.generatedCount} invoices for enrolled class students`);
+      const skippedMsg = res.skippedCount ? ` (${res.skippedCount} skipped as already invoiced)` : '';
+      success(`Generated ${res.generatedCount} invoices for enrolled class students${skippedMsg}`);
       setBulkModalOpen(false);
       fetchInvoices();
     } catch (err: any) {

@@ -143,10 +143,11 @@ export const FeeService = {
     classId: string;
     sectionId?: string;
     academicSessionId: string;
-    feeStructureId: string;
+    feeStructureId?: string;
     title: string;
+    billingPeriod?: string;
     dueDate: string;
-  }): Promise<{ generatedCount: number; totalEligible: number }> {
+  }): Promise<{ generatedCount: number; skippedCount?: number; totalEligible: number }> {
     const res = await api.post('/fees/invoices/bulk', payload);
     return res.data?.data;
   },

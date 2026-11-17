@@ -679,6 +679,7 @@ model FeeInvoice {
   title             String        @db.VarChar(255) // e.g. "April 2026 Tuition Fee"
   issueDate         DateTime      @default(now()) @map("issue_date")
   dueDate           DateTime      @map("due_date") @db.Date
+  billingPeriod     String?       @map("billing_period") @db.VarChar(50) // e.g. "2026-11" or "NOV-2026"
   subtotal          Decimal       @db.Decimal(10, 2)
   discountAmount    Decimal       @default(0.00) @map("discount_amount") @db.Decimal(10, 2)
   lateFeeAmount     Decimal       @default(0.00) @map("late_fee_amount") @db.Decimal(10, 2)
@@ -699,6 +700,7 @@ model FeeInvoice {
   @@unique([schoolId, invoiceNumber])
   @@index([schoolId, status])
   @@index([schoolId, studentId])
+  @@index([schoolId, studentId, billingPeriod])
   @@index([schoolId, dueDate])
   @@map("fee_invoices")
 }

@@ -258,6 +258,29 @@ export class FeeService {
       throw new Error('Student not found or belongs to another institution');
     }
 
+    // Determine normalized billing period or fallback to trimmed title
+    const billingPeriod = (data.billingPeriod || data.title).trim();
+
+    // Idempotency check: check if an active invoice for this student, session and billing period already exists
+    const existingInvoice = await prisma.feeInvoice.findFirst({
+      where: {
+        schoolId,
+        studentId: data.studentId,
+        academicSessionId: data.academicSessionId,
+        status: { notIn: ['VOID', 'CANCELLED'] },
+        OR: [
+          { billingPeriod },
+          { title: data.title.trim() },
+        ],
+      },
+    });
+
+    if (existingInvoice) {
+      throw new Error(
+        `Invoice already exists for student ${student.firstName} ${student.lastName} for period "${data.title}" (Invoice #${existingInvoice.invoiceNumber}). Duplicate generation skipped.`
+      );
+    }
+
     // Validate heads
     const headIds = data.items.map((i) => i.feeHeadId);
     const validHeads = await prisma.feeHead.findMany({
@@ -289,6 +312,7 @@ export class FeeService {
           academicSessionId: data.academicSessionId,
           invoiceNumber,
           title: data.title,
+          billingPeriod,
           dueDate: new Date(data.dueDate),
           subtotal: new Prisma.Decimal(subtotal),
           discountAmount: new Prisma.Decimal(discount),
@@ -405,9 +429,34 @@ export class FeeService {
       });
     }
 
+    const billingPeriod = (data.billingPeriod || data.title).trim();
+
+    // Check for students who ALREADY have an invoice for this title/billing period
+    const existingInvoices = await prisma.feeInvoice.findMany({
+      where: {
+        schoolId,
+        studentId: { in: students.map((s) => s.id) },
+        academicSessionId: data.academicSessionId,
+        status: { notIn: ['VOID', 'CANCELLED'] },
+        OR: [
+          { billingPeriod },
+          { title: data.title.trim() },
+        ],
+      },
+      select: { studentId: true },
+    });
+
+    const alreadyBilledStudentIds = new Set(existingInvoices.map((i) => i.studentId));
+
     let generatedCount = 0;
+    let skippedCount = 0;
 
     for (const student of students) {
+      // Idempotency: Skip student if already billed for this billing cycle
+      if (alreadyBilledStudentIds.has(student.id)) {
+        skippedCount++;
+        continue;
+      }
       // Determine applicable structure:
       // 1. Student's individual assigned structure (if any)
       // 2. Default class structure (fallback)
@@ -490,6 +539,7 @@ export class FeeService {
           studentId: student.id,
           academicSessionId: data.academicSessionId,
           title: data.title,
+          billingPeriod,
           dueDate: data.dueDate,
           discountAmount: concessionAmount,
           lateFeeAmount: 0,
@@ -500,13 +550,13 @@ export class FeeService {
       generatedCount++;
     }
 
-    if (generatedCount === 0) {
+    if (generatedCount === 0 && skippedCount === 0) {
       throw new Error(
         'No invoices generated. Please ensure a fee structure exists for this class or is assigned to students.'
       );
     }
 
-    return { generatedCount, totalEligible: students.length };
+    return { generatedCount, skippedCount, totalEligible: students.length };
   }
 
   // ==========================================

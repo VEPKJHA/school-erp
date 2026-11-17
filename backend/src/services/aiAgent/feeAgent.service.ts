@@ -2,12 +2,15 @@ import { GoogleGenAI } from '@google/genai';
 import { ENV } from '../../config/env';
 import { prisma } from '../../config/prisma';
 import { AuditService } from '../audit.service';
+import { FeeService } from '../fee.service';
 import { getFeeReminderQueue } from '../queue.service';
 import {
   getPendingFeesDeclaration,
   prepareFeeRemindersDeclaration,
+  prepareMonthlyInvoicesDeclaration,
   executeGetPendingFees,
   executePrepareFeeReminders,
+  executePrepareMonthlyInvoices,
 } from './feeTools';
 
 export interface ChatMessage {
@@ -74,9 +77,10 @@ Your role is to assist School Administrators and Finance Managers in inspecting 
 STRICT OPERATIONAL RULES:
 1. TENANT GUARDRAIL: You are operating within tenantId: "${tenantId}". You must never attempt to access or reveal data from any other school.
 2. HUMAN-IN-THE-LOOP (HITL) APPROVAL MANDATE:
-   - You CANNOT and MUST NOT send SMS, emails, or messages directly.
+   - You CANNOT and MUST NOT send SMS, emails, or messages directly, nor generate invoices autonomously.
    - When the user asks to "send a reminder", "notify parents", "alert students with pending fees", or similar actions, you MUST use the \`prepareFeeReminders\` tool to draft a pending action.
-   - Explain clearly to the admin that reminders have been staged and require their explicit review and one-click approval before any communication is dispatched.
+   - When the user asks to "generate invoices", "bill students for this month", "create fees", or similar actions, you MUST use the \`prepareMonthlyInvoices\` tool. It detects existing invoices to prevent duplicates and stages a pending action.
+   - Explain clearly to the admin that the action proposal has been staged and requires their explicit review and one-click approval before execution.
 3. DATA RETRIEVAL:
    - When asked about pending fees, defaulters, dues for this month or a specific class, call the \`getPendingFees\` tool.
    - Summarize the results clearly with student counts, total pending amounts, and actionable advice.
@@ -85,7 +89,11 @@ STRICT OPERATIONAL RULES:
     // Tools definition with Google Gemini SDK
     const tools = [
       {
-        functionDeclarations: [getPendingFeesDeclaration, prepareFeeRemindersDeclaration],
+        functionDeclarations: [
+          getPendingFeesDeclaration,
+          prepareFeeRemindersDeclaration,
+          prepareMonthlyInvoicesDeclaration,
+        ],
       },
     ];
 
@@ -152,6 +160,20 @@ STRICT OPERATIONAL RULES:
               expiresAt: toolOutput.expiresAt,
               studentCount: toolOutput.studentCount,
               totalAmount: toolOutput.preview.reduce((acc: number, cur: any) => acc + cur.pendingAmount, 0),
+              preview: toolOutput.preview,
+            };
+          } else if (callName === 'prepareMonthlyInvoices') {
+            toolOutput = await executePrepareMonthlyInvoices(tenantId, userId, callArgs);
+            toolResultsAcc.push({ tool: 'prepareMonthlyInvoices', data: toolOutput });
+
+            pendingActionData = {
+              actionId: toolOutput.actionId,
+              actionType: toolOutput.actionType,
+              pendingApproval: true,
+              summary: toolOutput.summary,
+              expiresAt: toolOutput.expiresAt,
+              studentCount: toolOutput.studentCount,
+              totalAmount: toolOutput.totalAmount,
               preview: toolOutput.preview,
             };
           }
@@ -262,7 +284,63 @@ STRICT OPERATIONAL RULES:
       },
     });
 
-    // Enqueue jobs into BullMQ
+    // Branch execution based on actionType
+    if (action.actionType === 'GENERATE_INVOICES') {
+      let createdInvoicesCount = 0;
+      const createdInvoiceIds: string[] = [];
+
+      for (const stu of students) {
+        try {
+          const inv = await FeeService.generateInvoice(
+            tenantId,
+            {
+              studentId: stu.studentId,
+              academicSessionId: payload.academicSessionId,
+              title: payload.title,
+              billingPeriod: payload.billingPeriod,
+              dueDate: payload.dueDate,
+              discountAmount: stu.discountAmount || 0,
+              lateFeeAmount: 0,
+              items: stu.items,
+            },
+            userId
+          );
+          createdInvoiceIds.push(inv.id);
+          createdInvoicesCount++;
+        } catch (invErr: any) {
+          console.warn(`[FeeAgentService] Skipped invoice for student ${stu.studentId}:`, invErr.message);
+        }
+      }
+
+      await AuditService.log({
+        schoolId: tenantId,
+        userId,
+        action: 'AI_AGENT_FEE_INVOICE_GENERATION_APPROVED',
+        entity: 'AgentPendingAction',
+        entityId: action.id,
+        newValue: {
+          actionId: action.id,
+          actionType: action.actionType,
+          billingPeriod: payload.billingPeriod,
+          studentCount: students.length,
+          createdInvoicesCount,
+          totalAmount: payload.totalAmount,
+        },
+        ipAddress: userIp,
+        userAgent,
+      });
+
+      return {
+        success: true,
+        actionId: updatedAction.id,
+        status: 'APPROVED',
+        createdInvoicesCount,
+        totalAmount: payload.totalAmount,
+        message: `Successfully generated ${createdInvoicesCount} fee invoices for ${payload.title}!`,
+      };
+    }
+
+    // Default: SEND_FEE_REMINDER - Enqueue jobs into BullMQ
     let queuedJobsCount = 0;
     try {
       const queue = getFeeReminderQueue();

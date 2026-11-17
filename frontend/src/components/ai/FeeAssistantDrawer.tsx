@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import {
   Sparkles,
   X,
@@ -12,6 +14,7 @@ import {
   ArrowRight,
   ShieldCheck,
   RefreshCw,
+  FileSpreadsheet,
 } from 'lucide-react';
 import {
   AiAgentService,
@@ -36,6 +39,7 @@ interface DisplayMessage {
 
 const QUICK_PROMPTS = [
   'Which students have pending fees for this month, and send them a reminder?',
+  'Generate pending invoices for this month',
   'Show all students with overdue fees',
   'Prepare fee reminder notifications for pending fee defaulters',
   'What is our total outstanding fee balance this month?',
@@ -293,7 +297,15 @@ export const FeeAssistantDrawer: React.FC<FeeAssistantDrawerProps> = ({
                       : 'bg-white text-slate-800 rounded-tl-none border border-slate-200/80 shadow-sm'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                  {msg.role === 'user' ? (
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  ) : (
+                    <div className="prose prose-sm max-w-none prose-slate text-slate-800 leading-relaxed space-y-2 [&>h1]:text-base [&>h1]:font-bold [&>h1]:text-slate-900 [&>h2]:text-sm [&>h2]:font-bold [&>h2]:text-slate-900 [&>h3]:text-xs [&>h3]:font-bold [&>h3]:text-slate-900 [&>h3]:uppercase [&>h3]:tracking-wider [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:space-y-1 [&>ol]:list-decimal [&>ol]:pl-5 [&>ol]:space-y-1 [&>p]:mb-2 [&>p:last-child]:mb-0 [&>strong]:font-semibold [&>strong]:text-slate-900 [&>code]:bg-slate-100 [&>code]:text-indigo-700 [&>code]:px-1.5 [&>code]:py-0.5 [&>code]:rounded [&>code]:font-mono [&>code]:text-xs">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                   <span
                     className={`block text-[10px] mt-1.5 ${
                       msg.role === 'user' ? 'text-indigo-200' : 'text-slate-400'
@@ -379,7 +391,11 @@ export const FeeAssistantDrawer: React.FC<FeeAssistantDrawerProps> = ({
                     {msg.approved ? (
                       <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center space-x-2 text-xs text-emerald-800 font-semibold">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        <span>Action Approved: Notification tasks enqueued into BullMQ / Redis queue.</span>
+                        <span>
+                          {msg.pendingAction.actionType === 'GENERATE_INVOICES'
+                            ? 'Action Approved: Fee invoices have been created and student ledgers debited.'
+                            : 'Action Approved: Notification tasks enqueued into BullMQ / Redis queue.'}
+                        </span>
                       </div>
                     ) : msg.rejected ? (
                       <div className="p-3 bg-slate-100 border border-slate-200 rounded-xl flex items-center space-x-2 text-xs text-slate-600 font-medium">
@@ -392,7 +408,7 @@ export const FeeAssistantDrawer: React.FC<FeeAssistantDrawerProps> = ({
                           type="button"
                           disabled={rejectingActionId === msg.pendingAction.actionId || approvingActionId === msg.pendingAction.actionId}
                           onClick={() => handleRejectAction(msg.id, msg.pendingAction!.actionId)}
-                          className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-200 transition-colors disabled:opacity-50"
+                          className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl border border-slate-200 transition-colors disabled:opacity-50 cursor-pointer"
                         >
                           {rejectingActionId === msg.pendingAction.actionId ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -405,14 +421,18 @@ export const FeeAssistantDrawer: React.FC<FeeAssistantDrawerProps> = ({
                           type="button"
                           disabled={approvingActionId === msg.pendingAction.actionId || rejectingActionId === msg.pendingAction.actionId}
                           onClick={() => handleApproveAction(msg.id, msg.pendingAction!.actionId)}
-                          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-all disabled:opacity-50"
+                          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-all disabled:opacity-50 cursor-pointer"
                         >
                           {approvingActionId === msg.pendingAction.actionId ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <>
                               <CheckCircle2 className="w-4 h-4" />
-                              <span>Approve & Send Reminders</span>
+                              <span>
+                                {msg.pendingAction.actionType === 'GENERATE_INVOICES'
+                                  ? 'Approve & Generate Invoices'
+                                  : 'Approve & Send Reminders'}
+                              </span>
                             </>
                           )}
                         </button>
