@@ -11,8 +11,10 @@ router.use(authenticate, enforceTenant);
 
 router.get('/my-school', requirePermission(PERMISSIONS.SCHOOL_READ), SchoolController.getProfile);
 router.put('/my-school', requirePermission(PERMISSIONS.SCHOOL_UPDATE), SchoolController.updateProfile);
+router.get('/platform-overview', requirePermission(PERMISSIONS.SCHOOL_READ), SchoolController.getPlatformStats);
 router.get('/', requirePermission(PERMISSIONS.SCHOOL_READ), SchoolController.listSchools);
 router.post('/', requirePermission(PERMISSIONS.SCHOOL_UPDATE), SchoolController.createSchool);
+router.patch('/:id/toggle-status', requirePermission(PERMISSIONS.SCHOOL_UPDATE), SchoolController.toggleSchoolStatus);
 router.get('/:id/admins', requirePermission(PERMISSIONS.SCHOOL_READ), SchoolController.getSchoolAdmins);
 
 export default router;

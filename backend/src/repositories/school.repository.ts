@@ -43,6 +43,21 @@ export class SchoolRepository {
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: { name: 'asc' },
+        include: {
+          _count: {
+            select: {
+              students: true,
+              users: true,
+              academicSessions: true,
+              feeInvoices: true,
+            },
+          },
+          academicSessions: {
+            where: { isCurrent: true },
+            take: 1,
+            select: { id: true, name: true, startDate: true, endDate: true },
+          },
+        },
       }),
     ]);
 

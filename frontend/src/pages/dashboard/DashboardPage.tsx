@@ -17,13 +17,21 @@ import { AuthService } from '../../services/auth.service';
 import { useAuth } from '../../context/AuthContext';
 import { DashboardStats } from '../../types';
 import { Badge } from '../../components/common/Badge';
+import { SuperAdminPlatformDashboard } from '../superadmin/SuperAdminPlatformDashboard';
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const isSuperAdmin = user?.role?.code === 'SUPER_ADMIN';
+
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (isSuperAdmin) {
+      setIsLoading(false);
+      return;
+    }
+
     const fetchStats = async () => {
       try {
         const data = await AuthService.getDashboardStats();
@@ -36,7 +44,12 @@ export const DashboardPage: React.FC = () => {
     };
 
     fetchStats();
-  }, []);
+  }, [isSuperAdmin]);
+
+  // If authenticated user is SUPER_ADMIN, render the SaaS Global Platform Control Center
+  if (isSuperAdmin) {
+    return <SuperAdminPlatformDashboard />;
+  }
 
   return (
     <div className="space-y-8">

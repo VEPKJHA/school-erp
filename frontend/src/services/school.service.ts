@@ -13,7 +13,21 @@ export const SchoolService = {
 
   async listSchools(params?: { page?: number; pageSize?: number; search?: string }) {
     const res = await api.get('/schools', { params });
-    return res.data; // contains data and meta
+    // Returns array of schools from res.data.data (Standard API Response shape)
+    return {
+      schools: res.data?.data || [],
+      meta: res.data?.meta || {},
+    };
+  },
+
+  async toggleSchoolStatus(schoolId: string) {
+    const res = await api.patch(`/schools/${schoolId}/toggle-status`);
+    return res.data?.data;
+  },
+
+  async getPlatformOverview() {
+    const res = await api.get('/schools/platform-overview');
+    return res.data?.data;
   },
 
   async createSchool(data: any) {
