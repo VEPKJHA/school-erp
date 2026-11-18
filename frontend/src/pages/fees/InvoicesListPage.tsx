@@ -134,7 +134,7 @@ export const InvoicesListPage: React.FC = () => {
 
   const handleCollectPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!collectTarget) return;
+    if (!collectTarget || isCollecting) return;
 
     if (paymentAmount <= 0) {
       error('Please enter a valid payment amount');

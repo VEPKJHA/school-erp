@@ -606,65 +606,71 @@ export class FeeService {
 
     const year = new Date().getFullYear();
 
-    // Atomic transaction for payment collection, invoice update, and ledger post
-    const result = await prisma.$transaction(async (tx: any) => {
-      // 1. Generate human-readable receipt number
-      const receiptNumber = await SequenceGenerator.generateReceiptNumber(schoolId, year, tx);
-
-      // 2. Create Payment Record
-      const payment = await tx.feePayment.create({
-        data: {
-          schoolId,
-          invoiceId: invoice.id,
-          studentId: invoice.studentId,
-          receiptNumber,
-          amount: new Prisma.Decimal(paymentAmount),
-          paymentMode: data.paymentMode,
-          paymentDate: data.paymentDate ? new Date(data.paymentDate) : new Date(),
-          referenceNumber: data.referenceNumber,
-          status: 'SUCCESS',
-          collectedById: userId,
-          remarks: data.remarks,
-        },
-      });
-
-      // 3. Update Invoice Balance & Status
-      const newPaidAmount = Number(invoice.paidAmount) + paymentAmount;
-      const newBalance = currentBalance - paymentAmount;
-      const newStatus = newBalance <= 0 ? 'PAID' : 'PARTIALLY_PAID';
-
-      const updatedInvoice = await tx.feeInvoice.update({
-        where: { id: invoice.id },
-        data: {
-          paidAmount: new Prisma.Decimal(newPaidAmount),
-          balanceAmount: new Prisma.Decimal(newBalance),
-          status: newStatus,
-        },
-      });
-
-      // 4. Update Student Fee Ledger: CREDIT
-      const lastLedger = await tx.studentFeeLedger.findFirst({
-        where: { schoolId, studentId: invoice.studentId },
-        orderBy: { entryDate: 'desc' },
-      });
-      const currentLedgerBalance = lastLedger ? Number(lastLedger.balanceAfter) : 0;
-      const newLedgerBalance = currentLedgerBalance - paymentAmount;
-
-      await tx.studentFeeLedger.create({
-        data: {
-          schoolId,
-          studentId: invoice.studentId,
-          type: 'CREDIT',
-          amount: new Prisma.Decimal(paymentAmount),
-          balanceAfter: new Prisma.Decimal(newLedgerBalance),
-          referenceType: 'PAYMENT',
-          referenceId: payment.id,
-          description: `Fee Receipt: ${receiptNumber} (${data.paymentMode})`,
-        },
-      });
-
-      return { payment, invoice: updatedInvoice };
+    // Optimize queries outside the transaction:
+    // Read the previous student fee ledger record before entering transaction
+    const lastLedger = await prisma.studentFeeLedger.findFirst({
+      where: { schoolId, studentId: invoice.studentId },
+      orderBy: { entryDate: 'desc' },
     });
+    const currentLedgerBalance = lastLedger ? Number(lastLedger.balanceAfter) : 0;
+    const newLedgerBalance = currentLedgerBalance - paymentAmount;
+
+    const newPaidAmount = Number(invoice.paidAmount) + paymentAmount;
+    const newBalance = currentBalance - paymentAmount;
+    const newStatus = newBalance <= 0 ? 'PAID' : 'PARTIALLY_PAID';
+
+    // Atomic transaction for payment collection, invoice update, and ledger post
+    // With explicit maxWait and timeout to prevent cloud database timeout errors
+    const result = await prisma.$transaction(
+      async (tx: any) => {
+        // 1. Generate human-readable receipt number
+        const receiptNumber = await SequenceGenerator.generateReceiptNumber(schoolId, year, tx);
+
+        // 2. Create Payment Record
+        const payment = await tx.feePayment.create({
+          data: {
+            schoolId,
+            invoiceId: invoice.id,
+            studentId: invoice.studentId,
+            receiptNumber,
+            amount: new Prisma.Decimal(paymentAmount),
+            paymentMode: data.paymentMode,
+            paymentDate: data.paymentDate ? new Date(data.paymentDate) : new Date(),
+            referenceNumber: data.referenceNumber,
+            status: 'SUCCESS',
+            collectedById: userId,
+            remarks: data.remarks,
+          },
+        });
+
+        // 3. Update Invoice Balance & Status and 4. Create Ledger entry in parallel
+        const [updatedInvoice] = await Promise.all([
+          tx.feeInvoice.update({
+            where: { id: invoice.id },
+            data: {
+              paidAmount: new Prisma.Decimal(newPaidAmount),
+              balanceAmount: new Prisma.Decimal(newBalance),
+              status: newStatus,
+            },
+          }),
+          tx.studentFeeLedger.create({
+            data: {
+              schoolId,
+              studentId: invoice.studentId,
+              type: 'CREDIT',
+              amount: new Prisma.Decimal(paymentAmount),
+              balanceAfter: new Prisma.Decimal(newLedgerBalance),
+              referenceType: 'PAYMENT',
+              referenceId: payment.id,
+              description: `Fee Receipt: ${receiptNumber} (${data.paymentMode})`,
+            },
+          }),
+        ]);
+
+        return { payment, invoice: updatedInvoice };
+      },
+      { maxWait: 10000, timeout: 20000 }
+    );
 
     await AuditService.log({
       schoolId,
