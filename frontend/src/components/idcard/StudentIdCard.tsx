@@ -219,27 +219,38 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
 
         {/* Top Header Banner - High-contrast white text over dark navy wedge */}
         <div
-          className="relative z-10 flex items-center gap-[2.5mm] px-[1mm] pt-[0.5mm] pb-[1mm]"
-          style={{ position: 'relative', zIndex: 10 }}
+          className="relative z-10 flex items-center gap-[2.5mm] px-[3mm] pt-[1.5mm] pb-[1mm] w-full box-border overflow-hidden"
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2.5mm',
+            padding: '1.5mm 3mm',
+            width: '100%',
+            boxSizing: 'border-box',
+            overflow: 'hidden',
+          }}
         >
           {school?.logoUrl ? (
             <div
               className="rounded-full bg-white shadow-xs shrink-0 flex items-center justify-center border border-white/80 overflow-hidden"
               style={{
-                width: '11mm',
-                height: '11mm',
-                minWidth: '11mm',
-                minHeight: '11mm',
-                maxWidth: '11mm',
-                maxHeight: '11mm',
+                width: '10mm',
+                height: '10mm',
+                minWidth: '10mm',
+                maxWidth: '10mm',
+                minHeight: '10mm',
+                maxHeight: '10mm',
                 borderRadius: '50%',
-                overflow: 'hidden',
-                background: '#ffffff',
+                backgroundColor: '#ffffff',
                 padding: '1mm',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flex: '0 0 10mm',
                 flexShrink: 0,
+                overflow: 'hidden',
                 boxSizing: 'border-box',
               }}
             >
@@ -247,10 +258,10 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
                 src={school.logoUrl}
                 alt={school.name}
                 style={{
-                  width: '100%',
-                  height: '100%',
-                  maxWidth: '9mm',
-                  maxHeight: '9mm',
+                  width: '8mm',
+                  height: '8mm',
+                  maxWidth: '8mm',
+                  maxHeight: '8mm',
                   objectFit: 'contain',
                   display: 'block',
                 }}
@@ -258,38 +269,44 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
             </div>
           ) : (
             <div
-              className="rounded-full bg-white text-indigo-950 font-black text-[7.5pt] flex items-center justify-center shrink-0 shadow-xs border border-white/80"
+              className="rounded-full bg-white text-indigo-950 font-black text-[7pt] flex items-center justify-center shrink-0 shadow-xs border border-white/80"
               style={{
-                width: '11mm',
-                height: '11mm',
-                minWidth: '11mm',
-                minHeight: '11mm',
-                maxWidth: '11mm',
-                maxHeight: '11mm',
+                width: '10mm',
+                height: '10mm',
+                minWidth: '10mm',
+                maxWidth: '10mm',
+                minHeight: '10mm',
+                maxHeight: '10mm',
                 borderRadius: '50%',
-                overflow: 'hidden',
-                display: 'flex',
+                backgroundColor: '#ffffff',
+                display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                flex: '0 0 10mm',
                 flexShrink: 0,
+                overflow: 'hidden',
+                boxSizing: 'border-box',
               }}
             >
               {school?.name?.slice(0, 2)?.toUpperCase() || 'ED'}
             </div>
           )}
-          <div className="overflow-hidden flex-1 leading-tight">
+          <div
+            className="overflow-hidden flex-1 leading-tight text-left min-w-0"
+            style={{ flex: 1, minWidth: 0, textAlign: 'left' }}
+          >
             <h3
-              className="text-[7.8pt] font-black uppercase tracking-wide truncate leading-tight text-white"
-              style={{ color: '#ffffff', fontWeight: 900 }}
+              className="text-[8.5pt] font-black uppercase tracking-wide truncate leading-tight text-white block"
+              style={{ color: '#ffffff', fontWeight: 800, fontSize: '8.5pt', lineHeight: 1.15 }}
             >
               {school?.name || 'EduCore Global Academy'}
             </h3>
             <p
-              className="text-[5.2pt] font-bold truncate leading-none mt-[0.6mm] text-amber-300"
-              style={{ color: '#fde047', fontWeight: 700 }}
+              className="text-[6.5pt] font-semibold truncate leading-none mt-[0.6mm] text-amber-300 block"
+              style={{ color: '#fde047', fontWeight: 600, fontSize: '6.5pt' }}
             >
-              {student.session?.name ? `Session ${student.session.name}` : 'Student Identity Card'}
-              {school?.city ? ` • ${school.city}` : ''}
+              {student.session?.name ? `Session ${student.session.name}` : 'Session 2026-27'}
+              {school?.city ? ` • ${school.city}` : ' • Campus'}
             </p>
           </div>
         </div>
@@ -428,20 +445,21 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
           <div
             className="rounded-full bg-white shadow-xs mb-[0.8mm] flex items-center justify-center border border-white/80 overflow-hidden"
             style={{
-              width: '11mm',
-              height: '11mm',
-              minWidth: '11mm',
-              minHeight: '11mm',
-              maxWidth: '11mm',
-              maxHeight: '11mm',
+              width: '10mm',
+              height: '10mm',
+              minWidth: '10mm',
+              maxWidth: '10mm',
+              minHeight: '10mm',
+              maxHeight: '10mm',
               borderRadius: '50%',
-              overflow: 'hidden',
-              background: '#ffffff',
+              backgroundColor: '#ffffff',
               padding: '1mm',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flex: '0 0 10mm',
               flexShrink: 0,
+              overflow: 'hidden',
               boxSizing: 'border-box',
             }}
           >
@@ -449,10 +467,10 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
               src={school.logoUrl}
               alt={school.name}
               style={{
-                width: '100%',
-                height: '100%',
-                maxWidth: '9mm',
-                maxHeight: '9mm',
+                width: '8mm',
+                height: '8mm',
+                maxWidth: '8mm',
+                maxHeight: '8mm',
                 objectFit: 'contain',
                 display: 'block',
               }}
@@ -460,20 +478,23 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
           </div>
         ) : (
           <div
-            className="rounded-full bg-white text-indigo-950 font-black text-[7.5pt] flex items-center justify-center mb-[0.8mm] shadow-xs border border-white/80"
+            className="rounded-full bg-white text-indigo-950 font-black text-[7pt] flex items-center justify-center mb-[0.8mm] shadow-xs border border-white/80"
             style={{
-              width: '11mm',
-              height: '11mm',
-              minWidth: '11mm',
-              minHeight: '11mm',
-              maxWidth: '11mm',
-              maxHeight: '11mm',
+              width: '10mm',
+              height: '10mm',
+              minWidth: '10mm',
+              maxWidth: '10mm',
+              minHeight: '10mm',
+              maxHeight: '10mm',
               borderRadius: '50%',
-              overflow: 'hidden',
-              display: 'flex',
+              backgroundColor: '#ffffff',
+              display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
+              flex: '0 0 10mm',
               flexShrink: 0,
+              overflow: 'hidden',
+              boxSizing: 'border-box',
             }}
           >
             {school?.name?.slice(0, 2)?.toUpperCase() || 'ED'}
@@ -535,7 +556,7 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
           {fullName}
         </h4>
         <div className="inline-block px-[2.5mm] py-[0.4mm] rounded-full bg-indigo-900 text-white text-[5.2pt] font-bold mt-[0.5mm]">
-          Class: {className} {sectionName ? `(${sectionName})` : ''}
+          {className}{sectionName}
         </div>
       </div>
 
@@ -560,8 +581,8 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
 
       {/* Footer with Front QR + Authorized Signature */}
       <div
-        className="relative z-10 border-t border-slate-300 pt-[0.8mm] flex justify-between items-end text-[4.5pt]"
-        style={{ position: 'relative', zIndex: 10 }}
+        className="relative z-10 border-t border-slate-300 pt-[0.8mm] pr-[3mm] flex justify-between items-end text-[4.5pt]"
+        style={{ position: 'relative', zIndex: 10, paddingRight: '3mm' }}
       >
         <div className="border border-slate-300 bg-white p-[0.5mm] rounded-[0.8mm] shadow-xs">
           <QRCodeSVG

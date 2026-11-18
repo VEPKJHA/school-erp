@@ -97,7 +97,7 @@ body {
 @media print {
   @page {
     size: A4;
-    margin: 8mm;
+    margin: 6mm;
   }
 
   /* When printing ID cards, isolate only the ID cards container */
@@ -117,6 +117,7 @@ body {
     margin: 0 !important;
     padding: 0 !important;
     height: auto !important;
+    min-height: 0 !important;
     overflow: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -133,18 +134,25 @@ body {
   /* Each A4 sheet container */
   .a4-print-sheet {
     display: grid !important;
-    page-break-after: always !important;
-    break-after: page !important;
+    page-break-after: auto !important;
+    break-after: auto !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     width: 194mm !important;
-    height: 281mm !important;
+    min-height: 0 !important;
+    height: auto !important;
     margin: 0 auto !important;
     box-sizing: border-box !important;
     align-content: start !important;
     justify-content: center !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  /* Force page break only between sheets if there are multiple sheets */
+  .a4-print-sheet + .a4-print-sheet {
+    page-break-before: always !important;
+    break-before: page !important;
   }
 
   /* Landscape CR80: 2 cols x 4 rows = 8 cards */
