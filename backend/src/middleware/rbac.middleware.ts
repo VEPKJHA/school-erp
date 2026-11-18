@@ -26,6 +26,43 @@ export const requirePermission = (...requiredPermissions: string[]) => {
   };
 };
 
+/**
+ * Checks whether user has AT LEAST ONE of the specified permissions OR is member of allowed roles.
+ * Defaults to granting full access to SUPER_ADMIN and SCHOOL_ADMIN.
+ */
+export const requireAnyPermissionOrRole = (
+  permissions: string[] = [],
+  roles: string[] = []
+) => {
+  return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return ResponseUtil.unauthorized(res, 'Authentication required');
+    }
+
+    // Admins always permitted
+    if (req.user.roleCode === 'SUPER_ADMIN' || req.user.roleCode === 'SCHOOL_ADMIN') {
+      return next();
+    }
+
+    // Check role match
+    if (roles.includes(req.user.roleCode)) {
+      return next();
+    }
+
+    // Check permission match
+    const userPermissions = new Set(req.user.permissions || []);
+    const hasAny = permissions.some((perm) => userPermissions.has(perm));
+    if (hasAny) {
+      return next();
+    }
+
+    return ResponseUtil.forbidden(
+      res,
+      `Access denied. Required permission: ${permissions.join(' or ')}`
+    );
+  };
+};
+
 export const requireRole = (...allowedRoles: string[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.user) {

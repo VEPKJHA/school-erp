@@ -78,6 +78,7 @@ export const DEFAULT_TENANT_ROLES: DefaultRoleTemplate[] = [
     isSystem: false,
     permissionCodes: [
       'school:read',
+      'school:update',
       'academic:session:read',
       'class:read',
       'section:read',

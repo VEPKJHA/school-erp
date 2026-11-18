@@ -72,6 +72,7 @@ exports.DEFAULT_TENANT_ROLES = [
         isSystem: false,
         permissionCodes: [
             'school:read',
+            'school:update',
             'academic:session:read',
             'class:read',
             'section:read',

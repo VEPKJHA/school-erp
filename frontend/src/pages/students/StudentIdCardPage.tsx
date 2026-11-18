@@ -23,9 +23,17 @@ import { StudentPhotoCaptureModal } from '../../components/idcard/StudentPhotoCa
 import { SchoolLogoUploadModal } from '../../components/idcard/SchoolLogoUploadModal';
 
 export const StudentIdCardPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasRole, hasPermission } = useAuth();
   const { success, error } = useToast();
   const school = user?.school as CardSchool | undefined;
+
+  // Only SCHOOL_ADMIN, PRINCIPAL, or users with school:update / student:update can upload/change school logo
+  const canManageSchoolLogo =
+    hasRole('SUPER_ADMIN') ||
+    hasRole('SCHOOL_ADMIN') ||
+    hasRole('PRINCIPAL') ||
+    hasPermission('school:update') ||
+    hasPermission('student:update');
 
   // Filter & list state
   const [students, setStudents] = useState<CardStudent[]>([]);
@@ -203,14 +211,16 @@ export const StudentIdCardPage: React.FC = () => {
 
           {/* Action buttons */}
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setLogoModalOpen(true)}
-              className="px-3 py-2 text-xs font-semibold rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition flex items-center gap-1.5 shadow-xs"
-              title="Upload or update institution crest/logo"
-            >
-              <ImageIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>{activeSchoolLogo ? 'Change School Logo' : 'Upload School Logo'}</span>
-            </button>
+            {canManageSchoolLogo && (
+              <button
+                onClick={() => setLogoModalOpen(true)}
+                className="px-3 py-2 text-xs font-semibold rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition flex items-center gap-1.5 shadow-xs"
+                title="Upload or update institution crest/logo"
+              >
+                <ImageIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <span>{activeSchoolLogo ? 'Change School Logo' : 'Upload School Logo'}</span>
+              </button>
+            )}
             <button
               onClick={() => setActiveTab(activeTab === 'selector' ? 'preview' : 'selector')}
               className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition flex items-center gap-1.5 shadow-xs"

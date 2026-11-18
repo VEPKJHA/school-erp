@@ -10,7 +10,8 @@ const router = (0, express_1.Router)();
 router.use(auth_middleware_1.authenticate, tenant_middleware_1.enforceTenant);
 router.get('/my-school', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SCHOOL_READ), school_controller_1.SchoolController.getProfile);
 router.put('/my-school', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SCHOOL_UPDATE), school_controller_1.SchoolController.updateProfile);
-router.patch('/my-school/logo', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SCHOOL_UPDATE), school_controller_1.SchoolController.updateLogo);
+// Support both /my-school/logo and /current/logo aliases, permitting SCHOOL_ADMIN, PRINCIPAL, or school:update / student:update
+router.patch(['/my-school/logo', '/current/logo'], (0, rbac_middleware_1.requireAnyPermissionOrRole)([permissions_1.PERMISSIONS.SCHOOL_UPDATE, permissions_1.PERMISSIONS.STUDENT_UPDATE], ['SCHOOL_ADMIN', 'PRINCIPAL']), school_controller_1.SchoolController.updateLogo);
 router.get('/platform-overview', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SCHOOL_READ), school_controller_1.SchoolController.getPlatformStats);
 router.get('/', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SCHOOL_READ), school_controller_1.SchoolController.listSchools);
 router.post('/', (0, rbac_middleware_1.requirePermission)(permissions_1.PERMISSIONS.SCHOOL_UPDATE), school_controller_1.SchoolController.createSchool);

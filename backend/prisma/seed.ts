@@ -163,6 +163,7 @@ async function main() {
       isSystem: false,
       permissions: [
         'school:read',
+        'school:update',
         'user:read',
         'academic:session:read',
         'class:read',
