@@ -234,7 +234,7 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
         >
           {school?.logoUrl ? (
             <div
-              className="rounded-full bg-white shadow-xs shrink-0 flex items-center justify-center border border-white/80 overflow-hidden"
+              className="rounded-full shadow-xs shrink-0 flex items-center justify-center border border-white/80 overflow-hidden relative"
               style={{
                 width: '10mm',
                 height: '10mm',
@@ -252,8 +252,23 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
                 flexShrink: 0,
                 overflow: 'hidden',
                 boxSizing: 'border-box',
+                position: 'relative',
               }}
             >
+              {/* Guaranteed Print-Proof SVG White Circle Fill */}
+              <svg
+                viewBox="0 0 40 40"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  zIndex: 0,
+                  pointerEvents: 'none',
+                }}
+              >
+                <circle cx="20" cy="20" r="20" fill="#ffffff" />
+              </svg>
               <img
                 src={school.logoUrl}
                 alt={school.name}
@@ -264,12 +279,14 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
                   maxHeight: '8mm',
                   objectFit: 'contain',
                   display: 'block',
+                  position: 'relative',
+                  zIndex: 1,
                 }}
               />
             </div>
           ) : (
             <div
-              className="rounded-full bg-white text-indigo-950 font-black text-[7pt] flex items-center justify-center shrink-0 shadow-xs border border-white/80"
+              className="rounded-full text-indigo-950 font-black text-[7pt] flex items-center justify-center shrink-0 shadow-xs border border-white/80 relative overflow-hidden"
               style={{
                 width: '10mm',
                 height: '10mm',
@@ -286,9 +303,25 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
                 flexShrink: 0,
                 overflow: 'hidden',
                 boxSizing: 'border-box',
+                position: 'relative',
               }}
             >
-              {school?.name?.slice(0, 2)?.toUpperCase() || 'ED'}
+              <svg
+                viewBox="0 0 40 40"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  width: '100%',
+                  height: '100%',
+                  zIndex: 0,
+                  pointerEvents: 'none',
+                }}
+              >
+                <circle cx="20" cy="20" r="20" fill="#ffffff" />
+              </svg>
+              <span style={{ position: 'relative', zIndex: 1 }}>
+                {school?.name?.slice(0, 2)?.toUpperCase() || 'ED'}
+              </span>
             </div>
           )}
           <div
@@ -348,7 +381,7 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
           </div>
 
           {/* Details */}
-          <div className="flex-1 space-y-[0.7mm] overflow-hidden">
+          <div className="flex-1 space-y-[0.7mm] overflow-hidden pt-[2.5mm]">
             <div>
               <span className="text-[4.5pt] font-black uppercase text-indigo-800 tracking-wider block leading-none">
                 Student
@@ -443,7 +476,7 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
       >
         {school?.logoUrl ? (
           <div
-            className="rounded-full bg-white shadow-xs mb-[0.8mm] flex items-center justify-center border border-white/80 overflow-hidden"
+            className="rounded-full shadow-xs mb-[0.8mm] flex items-center justify-center border border-white/80 overflow-hidden relative"
             style={{
               width: '10mm',
               height: '10mm',
@@ -461,8 +494,23 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
               flexShrink: 0,
               overflow: 'hidden',
               boxSizing: 'border-box',
+              position: 'relative',
             }}
           >
+            {/* Guaranteed Print-Proof SVG White Circle Fill */}
+            <svg
+              viewBox="0 0 40 40"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                zIndex: 0,
+                pointerEvents: 'none',
+              }}
+            >
+              <circle cx="20" cy="20" r="20" fill="#ffffff" />
+            </svg>
             <img
               src={school.logoUrl}
               alt={school.name}
@@ -473,12 +521,14 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
                 maxHeight: '8mm',
                 objectFit: 'contain',
                 display: 'block',
+                position: 'relative',
+                zIndex: 1,
               }}
             />
           </div>
         ) : (
           <div
-            className="rounded-full bg-white text-indigo-950 font-black text-[7pt] flex items-center justify-center mb-[0.8mm] shadow-xs border border-white/80"
+            className="rounded-full text-indigo-950 font-black text-[7pt] flex items-center justify-center mb-[0.8mm] shadow-xs border border-white/80 relative overflow-hidden"
             style={{
               width: '10mm',
               height: '10mm',
@@ -495,9 +545,25 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
               flexShrink: 0,
               overflow: 'hidden',
               boxSizing: 'border-box',
+              position: 'relative',
             }}
           >
-            {school?.name?.slice(0, 2)?.toUpperCase() || 'ED'}
+            <svg
+              viewBox="0 0 40 40"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                zIndex: 0,
+                pointerEvents: 'none',
+              }}
+            >
+              <circle cx="20" cy="20" r="20" fill="#ffffff" />
+            </svg>
+            <span style={{ position: 'relative', zIndex: 1 }}>
+              {school?.name?.slice(0, 2)?.toUpperCase() || 'ED'}
+            </span>
           </div>
         )}
         <h3
