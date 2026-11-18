@@ -263,7 +263,7 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
                   inset: 0,
                   width: '100%',
                   height: '100%',
-                  zIndex: 0,
+                  zIndex: 1,
                   pointerEvents: 'none',
                 }}
               >
@@ -273,14 +273,14 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
                 src={school.logoUrl}
                 alt={school.name}
                 style={{
-                  width: '8mm',
-                  height: '8mm',
-                  maxWidth: '8mm',
-                  maxHeight: '8mm',
+                  width: '7.5mm',
+                  height: '7.5mm',
+                  maxWidth: '7.5mm',
+                  maxHeight: '7.5mm',
                   objectFit: 'contain',
                   display: 'block',
                   position: 'relative',
-                  zIndex: 1,
+                  zIndex: 2,
                 }}
               />
             </div>
@@ -313,13 +313,13 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
                   inset: 0,
                   width: '100%',
                   height: '100%',
-                  zIndex: 0,
+                  zIndex: 1,
                   pointerEvents: 'none',
                 }}
               >
                 <circle cx="20" cy="20" r="20" fill="#ffffff" />
               </svg>
-              <span style={{ position: 'relative', zIndex: 1 }}>
+              <span style={{ position: 'relative', zIndex: 2 }}>
                 {school?.name?.slice(0, 2)?.toUpperCase() || 'ED'}
               </span>
             </div>
@@ -505,7 +505,7 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
                 inset: 0,
                 width: '100%',
                 height: '100%',
-                zIndex: 0,
+                zIndex: 1,
                 pointerEvents: 'none',
               }}
             >
@@ -515,14 +515,14 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
               src={school.logoUrl}
               alt={school.name}
               style={{
-                width: '8mm',
-                height: '8mm',
-                maxWidth: '8mm',
-                maxHeight: '8mm',
+                width: '7.5mm',
+                height: '7.5mm',
+                maxWidth: '7.5mm',
+                maxHeight: '7.5mm',
                 objectFit: 'contain',
                 display: 'block',
                 position: 'relative',
-                zIndex: 1,
+                zIndex: 2,
               }}
             />
           </div>
@@ -555,13 +555,13 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
                 inset: 0,
                 width: '100%',
                 height: '100%',
-                zIndex: 0,
+                zIndex: 1,
                 pointerEvents: 'none',
               }}
             >
               <circle cx="20" cy="20" r="20" fill="#ffffff" />
             </svg>
-            <span style={{ position: 'relative', zIndex: 1 }}>
+            <span style={{ position: 'relative', zIndex: 2 }}>
               {school?.name?.slice(0, 2)?.toUpperCase() || 'ED'}
             </span>
           </div>
