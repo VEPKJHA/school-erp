@@ -11,6 +11,11 @@ export const SchoolService = {
     return res.data?.data;
   },
 
+  async updateSchoolLogo(logoUrl: string) {
+    const res = await api.patch('/schools/my-school/logo', { logoUrl });
+    return res.data?.data;
+  },
+
   async listSchools(params?: { page?: number; pageSize?: number; search?: string }) {
     const res = await api.get('/schools', { params });
     // Returns array of schools from res.data.data (Standard API Response shape)

@@ -20,7 +20,7 @@ model School {
   phone          String   @db.VarChar(50)
   alternatePhone String?  @db.VarChar(50)
   website        String?  @db.VarChar(255)
-  logoUrl        String?  @db.VarChar(500)
+  logoUrl        String?  @db.LongText
   affiliationNo  String?  @db.VarChar(100)
   board          String?  @db.VarChar(100) // CBSE, ICSE, State Board
   addressLine1   String   @db.VarChar(255)

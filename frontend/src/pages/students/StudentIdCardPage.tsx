@@ -20,6 +20,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { StudentIdCard, CardStudent, CardSchool } from '../../components/idcard/StudentIdCard';
 import { StudentPhotoCaptureModal } from '../../components/idcard/StudentPhotoCaptureModal';
+import { SchoolLogoUploadModal } from '../../components/idcard/SchoolLogoUploadModal';
 
 export const StudentIdCardPage: React.FC = () => {
   const { user } = useAuth();
@@ -43,6 +44,15 @@ export const StudentIdCardPage: React.FC = () => {
 
   // Photo Capture Modal
   const [photoModalStudent, setPhotoModalStudent] = useState<CardStudent | null>(null);
+  // School Logo Upload Modal
+  const [logoModalOpen, setLogoModalOpen] = useState<boolean>(false);
+  const [activeSchoolLogo, setActiveSchoolLogo] = useState<string | null>(school?.logoUrl || null);
+
+  useEffect(() => {
+    if (school?.logoUrl) {
+      setActiveSchoolLogo(school.logoUrl);
+    }
+  }, [school?.logoUrl]);
 
   // Load Classes
   useEffect(() => {
@@ -157,7 +167,10 @@ export const StudentIdCardPage: React.FC = () => {
     setTimeout(cleanup, 2000);
   };
 
-  // Chunk students into pages of slotsPerPage
+  // Memoized school object with dynamically updated logoUrl
+  const effectiveSchool = useMemo(() => {
+    return school ? { ...school, logoUrl: activeSchoolLogo } : null;
+  }, [school, activeSchoolLogo]);
   const studentPages = useMemo(() => {
     const pages: CardStudent[][] = [];
     for (let i = 0; i < selectedStudents.length; i += slotsPerPage) {
@@ -190,6 +203,14 @@ export const StudentIdCardPage: React.FC = () => {
 
           {/* Action buttons */}
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setLogoModalOpen(true)}
+              className="px-3 py-2 text-xs font-semibold rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition flex items-center gap-1.5 shadow-xs"
+              title="Upload or update institution crest/logo"
+            >
+              <ImageIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <span>{activeSchoolLogo ? 'Change School Logo' : 'Upload School Logo'}</span>
+            </button>
             <button
               onClick={() => setActiveTab(activeTab === 'selector' ? 'preview' : 'selector')}
               className="px-3.5 py-2 text-xs font-semibold rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition flex items-center gap-1.5 shadow-xs"
@@ -496,7 +517,7 @@ export const StudentIdCardPage: React.FC = () => {
                     {(sideMode === 'front' || sideMode === 'duplex') && (
                       <StudentIdCard
                         student={st}
-                        school={school}
+                        school={effectiveSchool}
                         orientation={orientation}
                         side="front"
                         onEditPhoto={(s) => setPhotoModalStudent(s)}
@@ -505,7 +526,7 @@ export const StudentIdCardPage: React.FC = () => {
                     {(sideMode === 'back' || sideMode === 'duplex') && (
                       <StudentIdCard
                         student={st}
-                        school={school}
+                        school={effectiveSchool}
                         orientation={orientation}
                         side="back"
                         onEditPhoto={(s) => setPhotoModalStudent(s)}
@@ -538,7 +559,7 @@ export const StudentIdCardPage: React.FC = () => {
                   <div key={`front-${st.id}`} className="card-cell">
                     <StudentIdCard
                       student={st}
-                      school={school}
+                      school={effectiveSchool}
                       orientation={orientation}
                       side="front"
                     />
@@ -569,7 +590,7 @@ export const StudentIdCardPage: React.FC = () => {
                       {st && (
                         <StudentIdCard
                           student={st}
-                          school={school}
+                          school={effectiveSchool}
                           orientation={orientation}
                           side="back"
                         />
@@ -582,6 +603,14 @@ export const StudentIdCardPage: React.FC = () => {
           </React.Fragment>
         ))}
       </div>
+
+      {/* School Logo Upload Modal */}
+      <SchoolLogoUploadModal
+        isOpen={logoModalOpen}
+        onClose={() => setLogoModalOpen(false)}
+        currentLogoUrl={activeSchoolLogo}
+        onLogoUpdated={(newLogoUrl) => setActiveSchoolLogo(newLogoUrl)}
+      />
 
       {/* Dual Photo Capture & Upload Modal */}
       {photoModalStudent && (

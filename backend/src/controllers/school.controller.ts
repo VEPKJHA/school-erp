@@ -50,6 +50,38 @@ export class SchoolController {
     }
   }
 
+  static async updateLogo(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const schoolId = req.schoolId || req.user?.schoolId;
+      if (!schoolId) {
+        return ResponseUtil.badRequest(res, 'No school institution context specified');
+      }
+
+      const { logoUrl } = req.body;
+      if (!logoUrl) {
+        return ResponseUtil.badRequest(res, 'logoUrl is required');
+      }
+
+      const updated = await prisma.school.update({
+        where: { id: schoolId },
+        data: { logoUrl },
+      });
+
+      await AuditService.log({
+        schoolId,
+        userId: req.user?.userId,
+        action: 'SCHOOL_LOGO_UPDATED',
+        entity: 'School',
+        entityId: schoolId,
+        newValue: { logoUrl },
+      });
+
+      return ResponseUtil.success(res, updated, 'School logo updated successfully');
+    } catch (error: any) {
+      return ResponseUtil.badRequest(res, error.message);
+    }
+  }
+
   static async listSchools(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;

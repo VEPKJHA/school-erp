@@ -8,6 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (token: string, user: User) => void;
   logout: () => Promise<void>;
+  updateUserSchool: (schoolUpdate: Partial<NonNullable<User['school']>>) => void;
   hasPermission: (permissionCode: string) => boolean;
   hasRole: (roleCode: string) => boolean;
 }
@@ -55,6 +56,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updateUserSchool = (schoolUpdate: Partial<NonNullable<User['school']>>) => {
+    setUser((prev) => {
+      if (!prev) return null;
+      const updatedSchool = prev.school
+        ? { ...prev.school, ...schoolUpdate }
+        : ({ id: '', name: '', code: '', ...schoolUpdate } as NonNullable<User['school']>);
+      const updatedUser = { ...prev, school: updatedSchool };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      return updatedUser;
+    });
+  };
+
   const hasPermission = (permissionCode: string): boolean => {
     if (!user) return false;
     if (user.role.code === 'SUPER_ADMIN' || user.role.code === 'SCHOOL_ADMIN') return true;
@@ -75,6 +88,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isLoading,
         login,
         logout,
+        updateUserSchool,
         hasPermission,
         hasRole,
       }}

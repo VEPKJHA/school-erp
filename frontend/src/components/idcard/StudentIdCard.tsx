@@ -201,23 +201,25 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
         style={cardStyle}
       >
         {/* Top Header Banner */}
-        <div className="absolute top-0 left-0 right-0 h-[13mm] bg-gradient-to-r from-indigo-950 via-indigo-900 to-indigo-950 flex items-center px-[3mm] gap-[2.5mm]">
+        <div className="absolute top-0 left-0 right-0 h-[14.5mm] bg-gradient-to-r from-indigo-950 via-indigo-900 to-indigo-950 flex items-center px-[3mm] gap-[2.8mm] shadow-xs">
           {school?.logoUrl ? (
-            <img
-              src={school.logoUrl}
-              alt="Logo"
-              className="w-[8.5mm] h-[8.5mm] rounded-full object-contain bg-white p-[0.4mm] shadow-xs shrink-0"
-            />
+            <div className="w-[12mm] h-[12mm] rounded-lg bg-white p-[0.6mm] shadow-xs shrink-0 flex items-center justify-center border border-white/40 overflow-hidden">
+              <img
+                src={school.logoUrl}
+                alt={school.name}
+                className="w-full h-full object-contain"
+              />
+            </div>
           ) : (
-            <div className="w-[8.5mm] h-[8.5mm] rounded-full bg-white text-indigo-950 font-black text-[6pt] flex items-center justify-center shrink-0 shadow-xs">
-              {school?.name?.charAt(0) || 'E'}
+            <div className="w-[12mm] h-[12mm] rounded-lg bg-white text-indigo-950 font-black text-[7.5pt] flex items-center justify-center shrink-0 shadow-xs border border-white/40">
+              {school?.name?.slice(0, 2)?.toUpperCase() || 'ED'}
             </div>
           )}
           <div className="text-white overflow-hidden flex-1">
-            <h3 className="text-[7.5pt] font-black uppercase tracking-wide truncate leading-tight">
+            <h3 className="text-[7.8pt] font-black uppercase tracking-wide truncate leading-tight">
               {school?.name || 'EduCore Global Academy'}
             </h3>
-            <p className="text-[4.8pt] text-indigo-200 font-medium truncate leading-none mt-[0.5mm]">
+            <p className="text-[5pt] text-indigo-200 font-medium truncate leading-none mt-[0.8mm]">
               {school?.city ? `${school.city}, ${school.state || 'India'}` : 'Affiliated to CBSE Board'}
               {student.session?.name ? ` • Session: ${student.session.name}` : ''}
             </p>
@@ -225,7 +227,7 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
         </div>
 
         {/* Spacer for banner */}
-        <div className="h-[12.5mm]" />
+        <div className="h-[14mm]" />
 
         {/* Body content */}
         <div className="flex-1 flex gap-[2.5mm] items-center pt-[1mm] overflow-hidden">
@@ -330,22 +332,24 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
       style={cardStyle}
     >
       {/* Top Header */}
-      <div className="text-center border-b border-indigo-100 pb-[1.2mm] pt-[0.5mm]">
+      <div className="text-center border-b border-indigo-100 pb-[1.5mm] pt-[1mm] flex flex-col items-center">
         {school?.logoUrl ? (
-          <img
-            src={school.logoUrl}
-            alt="Logo"
-            className="w-[8.5mm] h-[8.5mm] mx-auto rounded-full object-contain mb-[0.8mm]"
-          />
+          <div className="w-[12mm] h-[12mm] rounded-lg bg-white p-[0.6mm] shadow-xs mb-[1mm] flex items-center justify-center border border-indigo-100 overflow-hidden">
+            <img
+              src={school.logoUrl}
+              alt={school.name}
+              className="w-full h-full object-contain"
+            />
+          </div>
         ) : (
-          <div className="w-[8mm] h-[8mm] mx-auto rounded-full bg-indigo-950 text-white font-black text-[6pt] flex items-center justify-center mb-[0.8mm]">
-            {school?.name?.charAt(0) || 'E'}
+          <div className="w-[12mm] h-[12mm] rounded-lg bg-indigo-950 text-white font-black text-[7.5pt] flex items-center justify-center mb-[1mm] shadow-xs">
+            {school?.name?.slice(0, 2)?.toUpperCase() || 'ED'}
           </div>
         )}
-        <h3 className="text-[7pt] font-black uppercase tracking-wide text-indigo-950 truncate px-[1mm] leading-tight">
+        <h3 className="text-[7.2pt] font-black uppercase tracking-wide text-indigo-950 truncate px-[1mm] leading-tight max-w-[48mm]">
           {school?.name || 'EduCore Global Academy'}
         </h3>
-        <p className="text-[4.6pt] text-indigo-600 font-semibold mt-[0.3mm] leading-none">
+        <p className="text-[4.8pt] text-indigo-600 font-bold mt-[0.5mm] leading-none">
           {student.session?.name ? `Session ${student.session.name}` : 'Student Identity Card'}
         </p>
       </div>
