@@ -138,7 +138,23 @@ export const StudentIdCardPage: React.FC = () => {
       error('Please select at least one student to print ID cards.');
       return;
     }
+
+    const originalTitle = document.title;
+    document.title = `Student_ID_Cards_${selectedStudents.length}_Cards_${orientation.toUpperCase()}`;
+    document.body.classList.add('printing-id-cards');
+
+    const cleanup = () => {
+      document.title = originalTitle;
+      document.body.classList.remove('printing-id-cards');
+      window.removeEventListener('afterprint', cleanup);
+    };
+
+    window.addEventListener('afterprint', cleanup);
+
     window.print();
+
+    // Fallback cleanup
+    setTimeout(cleanup, 2000);
   };
 
   // Chunk students into pages of slotsPerPage
@@ -506,9 +522,9 @@ export const StudentIdCardPage: React.FC = () => {
       {/* =========================================================================
           PRINT ONLY CONTAINER (Rendered exclusively during window.print())
           Enforces exact A4 page packing (8 landscape or 9 portrait cards per sheet)
-          with 4mm cutting gap and duplex reverse mirroring
+          with 5mm cutting gap and duplex reverse mirroring
          ========================================================================= */}
-      <div className="print-only">
+      <div id="printable-id-cards-sheet" className="print-only">
         {studentPages.map((pageStudents, pageIdx) => (
           <React.Fragment key={`page-${pageIdx}`}>
             {/* Front Sheet */}

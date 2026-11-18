@@ -96,8 +96,30 @@ body {
 
 @media print {
   @page {
-    size: A4 portrait;
+    size: A4;
     margin: 8mm;
+  }
+
+  /* When printing ID cards, isolate only the ID cards container */
+  body.printing-id-cards * {
+    visibility: hidden !important;
+  }
+
+  body.printing-id-cards #printable-id-cards-sheet,
+  body.printing-id-cards #printable-id-cards-sheet * {
+    visibility: visible !important;
+  }
+
+  body.printing-id-cards #printable-id-cards-sheet {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .no-print {
@@ -121,22 +143,26 @@ body {
     box-sizing: border-box !important;
     align-content: start !important;
     justify-content: center !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Landscape CR80: 2 cols x 4 rows = 8 cards */
   .landscape-grid {
     grid-template-columns: repeat(2, 85.6mm) !important;
     grid-template-rows: repeat(4, 53.98mm) !important;
-    column-gap: 4mm !important;
-    row-gap: 4mm !important;
+    column-gap: 5mm !important;
+    row-gap: 5mm !important;
+    justify-content: center !important;
   }
 
   /* Portrait CR80: 3 cols x 3 rows = 9 cards */
   .portrait-grid {
     grid-template-columns: repeat(3, 53.98mm) !important;
     grid-template-rows: repeat(3, 85.6mm) !important;
-    column-gap: 3.5mm !important;
-    row-gap: 3.5mm !important;
+    column-gap: 5mm !important;
+    row-gap: 5mm !important;
+    justify-content: center !important;
   }
 
   .card-cell {
@@ -147,8 +173,11 @@ body {
     justify-content: center !important;
   }
 
+  .cr80-card,
   .id-card-element {
     box-shadow: none !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
