@@ -181,6 +181,11 @@ body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
+  /* Strict lock on school logo container and image to prevent any print overflow */
+  .cr80-card img {
+    max-width: 100% !important;
+  }
 }
 
 /* =========================================================

@@ -203,15 +203,57 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
         {/* Top Header Banner */}
         <div className="absolute top-0 left-0 right-0 h-[14.5mm] bg-gradient-to-r from-indigo-950 via-indigo-900 to-indigo-950 flex items-center px-[3mm] gap-[2.8mm] shadow-xs">
           {school?.logoUrl ? (
-            <div className="w-[12mm] h-[12mm] rounded-lg bg-white p-[0.6mm] shadow-xs shrink-0 flex items-center justify-center border border-white/40 overflow-hidden">
+            <div
+              className="rounded-full bg-white shadow-xs shrink-0 flex items-center justify-center border border-white/60 overflow-hidden"
+              style={{
+                width: '11mm',
+                height: '11mm',
+                minWidth: '11mm',
+                minHeight: '11mm',
+                maxWidth: '11mm',
+                maxHeight: '11mm',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                background: '#ffffff',
+                padding: '1mm',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                boxSizing: 'border-box',
+              }}
+            >
               <img
                 src={school.logoUrl}
                 alt={school.name}
-                className="w-full h-full object-contain"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  maxWidth: '9mm',
+                  maxHeight: '9mm',
+                  objectFit: 'contain',
+                  display: 'block',
+                }}
               />
             </div>
           ) : (
-            <div className="w-[12mm] h-[12mm] rounded-lg bg-white text-indigo-950 font-black text-[7.5pt] flex items-center justify-center shrink-0 shadow-xs border border-white/40">
+            <div
+              className="rounded-full bg-white text-indigo-950 font-black text-[7.5pt] flex items-center justify-center shrink-0 shadow-xs border border-white/60"
+              style={{
+                width: '11mm',
+                height: '11mm',
+                minWidth: '11mm',
+                minHeight: '11mm',
+                maxWidth: '11mm',
+                maxHeight: '11mm',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
               {school?.name?.slice(0, 2)?.toUpperCase() || 'ED'}
             </div>
           )}
@@ -332,17 +374,59 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
       style={cardStyle}
     >
       {/* Top Header */}
-      <div className="text-center border-b border-indigo-100 pb-[1.5mm] pt-[1mm] flex flex-col items-center">
+      <div className="text-center border-b border-indigo-100 pb-[1.5mm] pt-[0.5mm] flex flex-col items-center">
         {school?.logoUrl ? (
-          <div className="w-[12mm] h-[12mm] rounded-lg bg-white p-[0.6mm] shadow-xs mb-[1mm] flex items-center justify-center border border-indigo-100 overflow-hidden">
+          <div
+            className="rounded-full bg-white shadow-xs mb-[0.8mm] flex items-center justify-center border border-indigo-200 overflow-hidden"
+            style={{
+              width: '11mm',
+              height: '11mm',
+              minWidth: '11mm',
+              minHeight: '11mm',
+              maxWidth: '11mm',
+              maxHeight: '11mm',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              background: '#ffffff',
+              padding: '1mm',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              boxSizing: 'border-box',
+            }}
+          >
             <img
               src={school.logoUrl}
               alt={school.name}
-              className="w-full h-full object-contain"
+              style={{
+                width: '100%',
+                height: '100%',
+                maxWidth: '9mm',
+                maxHeight: '9mm',
+                objectFit: 'contain',
+                display: 'block',
+              }}
             />
           </div>
         ) : (
-          <div className="w-[12mm] h-[12mm] rounded-lg bg-indigo-950 text-white font-black text-[7.5pt] flex items-center justify-center mb-[1mm] shadow-xs">
+          <div
+            className="rounded-full bg-indigo-950 text-white font-black text-[7.5pt] flex items-center justify-center mb-[0.8mm] shadow-xs"
+            style={{
+              width: '11mm',
+              height: '11mm',
+              minWidth: '11mm',
+              minHeight: '11mm',
+              maxWidth: '11mm',
+              maxHeight: '11mm',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
             {school?.name?.slice(0, 2)?.toUpperCase() || 'ED'}
           </div>
         )}
