@@ -107,8 +107,33 @@ exports.prepareMonthlyInvoicesDeclaration = {
  */
 async function executeGetPendingFees(tenantId, args) {
     const now = new Date();
-    const targetYear = args.year || now.getFullYear();
-    const targetMonth = args.month || now.getMonth() + 1;
+    // Robust year parsing
+    let targetYear = now.getFullYear();
+    if (args.year) {
+        const parsedYear = parseInt(String(args.year).trim(), 10);
+        if (!isNaN(parsedYear) && parsedYear > 2000 && parsedYear < 2100) {
+            targetYear = parsedYear;
+        }
+    }
+    // Robust month parsing
+    let targetMonth = now.getMonth() + 1;
+    if (args.month !== undefined && args.month !== null) {
+        const rawMonthStr = String(args.month).trim().toLowerCase();
+        const parsedNum = parseInt(rawMonthStr, 10);
+        if (!isNaN(parsedNum) && parsedNum >= 1 && parsedNum <= 12) {
+            targetMonth = parsedNum;
+        }
+        else {
+            const monthNames = [
+                'january', 'february', 'march', 'april', 'may', 'june',
+                'july', 'august', 'september', 'october', 'november', 'december'
+            ];
+            const foundIdx = monthNames.findIndex((m) => rawMonthStr.includes(m) || m.startsWith(rawMonthStr));
+            if (foundIdx !== -1) {
+                targetMonth = foundIdx + 1;
+            }
+        }
+    }
     // Build due date or issue date range if month/year are provided
     const startDate = new Date(targetYear, targetMonth - 1, 1);
     const endDate = new Date(targetYear, targetMonth, 0, 23, 59, 59, 999);
@@ -270,25 +295,62 @@ async function executePrepareFeeReminders(tenantId, userId, args) {
  */
 async function executePrepareMonthlyInvoices(tenantId, userId, args) {
     const now = new Date();
-    const targetYear = args.year || now.getFullYear();
-    const targetMonth = args.month || (now.getMonth() + 1);
+    // Robust parsing for year (handles "2026", 2026, or omitted)
+    let targetYear = now.getFullYear();
+    if (args.year) {
+        const parsedYear = parseInt(String(args.year).trim(), 10);
+        if (!isNaN(parsedYear) && parsedYear > 2000 && parsedYear < 2100) {
+            targetYear = parsedYear;
+        }
+    }
+    // Robust parsing for month (handles 11, "11", "this month", "current", "november", or omitted)
+    let targetMonth = now.getMonth() + 1; // default to current month
+    if (args.month !== undefined && args.month !== null) {
+        const rawMonthStr = String(args.month).trim().toLowerCase();
+        const parsedNum = parseInt(rawMonthStr, 10);
+        if (!isNaN(parsedNum) && parsedNum >= 1 && parsedNum <= 12) {
+            targetMonth = parsedNum;
+        }
+        else {
+            const monthNames = [
+                'january', 'february', 'march', 'april', 'may', 'june',
+                'july', 'august', 'september', 'october', 'november', 'december'
+            ];
+            const foundIdx = monthNames.findIndex((m) => rawMonthStr.includes(m) || m.startsWith(rawMonthStr));
+            if (foundIdx !== -1) {
+                targetMonth = foundIdx + 1;
+            }
+            // If "this month", "current", etc., it remains defaulted to now.getMonth() + 1
+        }
+    }
     const monthName = new Date(targetYear, targetMonth - 1, 1).toLocaleString('default', { month: 'long' });
     const billingPeriod = `${targetYear}-${String(targetMonth).padStart(2, '0')}`;
     const invoiceTitle = (args.title || `${monthName} ${targetYear} Tuition & School Fee`).trim();
-    // Determine due date (e.g. 15th of current or specified month)
+    // Determine due date (defaults to 15th of target month)
     let calculatedDueDate = args.dueDate;
     if (!calculatedDueDate) {
         const dueDay = 15;
         const dueMonthStr = String(targetMonth).padStart(2, '0');
         calculatedDueDate = `${targetYear}-${dueMonthStr}-${String(dueDay).padStart(2, '0')}`;
     }
-    // Find active academic session for this tenant
-    const activeSession = await prisma_1.prisma.academicSession.findFirst({
+    // Find active academic session for this tenant (fallback to current or newest session if not marked ACTIVE)
+    let activeSession = await prisma_1.prisma.academicSession.findFirst({
         where: { schoolId: tenantId, status: 'ACTIVE' },
     });
+    if (!activeSession) {
+        activeSession = await prisma_1.prisma.academicSession.findFirst({
+            where: { schoolId: tenantId, isCurrent: true },
+        });
+    }
+    if (!activeSession) {
+        activeSession = await prisma_1.prisma.academicSession.findFirst({
+            where: { schoolId: tenantId },
+            orderBy: { startDate: 'desc' },
+        });
+    }
     const sessionId = activeSession?.id;
     if (!sessionId) {
-        throw new Error('No active academic session found for this school institution.');
+        throw new Error('No active academic session found for this school institution. Please configure an academic session first.');
     }
     // Query eligible active students under this tenant
     const studentWhere = {

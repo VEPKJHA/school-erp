@@ -28,7 +28,7 @@ class AiAgentController {
             return apiResponse_1.ResponseUtil.success(res, result, 'Agent response generated successfully');
         }
         catch (error) {
-            console.error('[AiAgentController.chat] error:', error);
+            console.error('[AI Agent Error]:', error);
             let userFriendlyMessage = error.message || 'Failed to process AI agent request';
             // Clean raw JSON error payloads (e.g. {"error":{"code":503...}})
             const lower = userFriendlyMessage.toLowerCase();
@@ -37,12 +37,19 @@ class AiAgentController {
                 lower.includes('unavailable') ||
                 lower.includes('high demand') ||
                 lower.includes('resource_exhausted') ||
-                lower.includes('rate limit') ||
-                userFriendlyMessage.trim().startsWith('{')) {
+                lower.includes('rate limit')) {
                 userFriendlyMessage =
                     'The AI service is momentarily busy due to high traffic. Please click retry or try again in a few seconds.';
             }
-            return apiResponse_1.ResponseUtil.serverError(res, userFriendlyMessage);
+            else if (userFriendlyMessage.trim().startsWith('{')) {
+                try {
+                    const parsed = JSON.parse(userFriendlyMessage);
+                    userFriendlyMessage = parsed.error?.message || parsed.message || userFriendlyMessage;
+                }
+                catch (_) { }
+            }
+            // Return informative message with 400 or 500 status
+            return apiResponse_1.ResponseUtil.badRequest(res, userFriendlyMessage);
         }
     }
     /**

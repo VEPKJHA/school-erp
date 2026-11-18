@@ -100,6 +100,45 @@ class FeeAgentService {
         throw lastError;
     }
     /**
+     * Deterministic fallback formatter to convert tool outputs into clean Markdown
+     * when Gemini returns an empty or generic response.
+     */
+    static formatToolFallbackMarkdown(toolResults, pendingAction) {
+        if (pendingAction && pendingAction.summary) {
+            return pendingAction.summary;
+        }
+        const sections = [];
+        for (const res of toolResults) {
+            if (res.tool === 'getPendingFees' && res.data) {
+                const { totalPendingStudents, totalPendingAmount, students } = res.data;
+                if (totalPendingStudents === 0 || !students || students.length === 0) {
+                    sections.push(`### 📋 Pending Fees Status\n\nGreat news! There are **no pending fee dues** matching the current criteria.`);
+                    continue;
+                }
+                let section = `### 📋 Outstanding Fee Dues Summary\n\nFound **${totalPendingStudents} student(s)** with total pending dues of **₹${Number(totalPendingAmount || 0).toLocaleString('en-IN')}**.\n\n`;
+                section += `| Student Name | Class | Adm No. | Pending Amount | Contact |\n`;
+                section += `| :--- | :--- | :--- | :--- | :--- |\n`;
+                for (const s of students.slice(0, 15)) {
+                    section += `| **${s.studentName}** | ${s.className || 'N/A'} ${s.sectionName || ''} | \`${s.admissionNumber || 'N/A'}\` | ₹${Number(s.pendingAmount || 0).toLocaleString('en-IN')} | ${s.parentContact || 'N/A'} |\n`;
+                }
+                if (students.length > 15) {
+                    section += `\n*...and ${students.length - 15} more student(s).*`;
+                }
+                sections.push(section);
+            }
+            else if (res.tool === 'prepareMonthlyInvoices' && res.data) {
+                sections.push(res.data.summary || `Draft invoices prepared for ${res.data.studentCount} student(s) totaling ₹${res.data.totalAmount?.toLocaleString('en-IN')}. Awaiting your confirmation.`);
+            }
+            else if (res.tool === 'prepareFeeReminders' && res.data) {
+                sections.push(res.data.summary || `Fee reminder notification draft prepared for ${res.data.studentCount} student(s). Awaiting your confirmation.`);
+            }
+        }
+        if (sections.length > 0) {
+            return sections.join('\n\n');
+        }
+        return 'I have successfully inspected the fee records for your school. Please review the results above.';
+    }
+    /**
      * Main Agent Loop with Function / Tool Calling and HITL gate
      */
     static async handleChat(params) {
@@ -210,21 +249,35 @@ STRICT OPERATIONAL RULES:
                 // Send function responses back to Gemini to synthesize natural language response
                 const followUpContents = [
                     ...contents,
-                    candidate?.content || { role: 'model', parts: [] },
+                    candidate?.content || {
+                        role: 'model',
+                        parts: functionCalls,
+                    },
                     {
                         role: 'user',
                         parts: functionResponseParts,
                     },
                 ];
-                const followUpResponse = await this.generateContentWithFallback(ai, {
-                    contents: followUpContents,
-                    systemInstruction,
-                    tools,
-                });
-                const finalReply = followUpResponse.candidates?.[0]?.content?.parts
-                    ?.map((p) => p.text || '')
-                    .join('')
-                    .trim() || 'I have processed your request.';
+                let finalReply = '';
+                try {
+                    const followUpResponse = await this.generateContentWithFallback(ai, {
+                        contents: followUpContents,
+                        systemInstruction,
+                        tools,
+                    });
+                    finalReply =
+                        followUpResponse.candidates?.[0]?.content?.parts
+                            ?.map((p) => p.text || '')
+                            .join('')
+                            .trim() || '';
+                }
+                catch (followUpErr) {
+                    console.warn('[FeeAgentService] Follow-up text generation warning (using deterministic formatter):', followUpErr);
+                }
+                // If Gemini returned empty or default generic phrase, use deterministic Markdown formatter
+                if (!finalReply || finalReply === 'I have processed your request.' || finalReply.length < 5) {
+                    finalReply = this.formatToolFallbackMarkdown(toolResultsAcc, pendingActionData);
+                }
                 return {
                     reply: finalReply,
                     toolResults: toolResultsAcc,
