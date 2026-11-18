@@ -61,8 +61,8 @@ export class FeeAgentService {
 
   /**
    * Executes ai.models.generateContent with automatic retry and prioritized fallback chain
-   * Fallback order: ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
-   * Automatically handles HTTP 503 (UNAVAILABLE / High Demand) and 429 (Rate Limit)
+   * Fallback order: ['gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.8-flash']
+   * Automatically handles HTTP 404 (NOT_FOUND / deprecated), 503 (UNAVAILABLE / High Demand), and 429 (Rate Limit)
    */
   private static async generateContentWithFallback(
     ai: GoogleGenAI,
@@ -72,7 +72,7 @@ export class FeeAgentService {
       tools?: any[];
     }
   ): Promise<any> {
-    const models = ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+    const models = ['gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.8-flash'];
     let lastError: any = null;
 
     for (let i = 0; i < models.length; i++) {
