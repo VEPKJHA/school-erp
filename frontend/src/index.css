@@ -153,3 +153,40 @@ body {
     print-color-adjust: exact !important;
   }
 }
+
+/* =========================================================
+   OFFICIAL FEE INVOICE & RECEIPT A4 PRINT ISOLATION ENGINE
+   ========================================================= */
+@media print {
+  body.printing-invoice * {
+    visibility: hidden !important;
+  }
+
+  body.printing-invoice #printable-invoice-sheet,
+  body.printing-invoice #printable-invoice-sheet * {
+    visibility: visible !important;
+  }
+
+  body.printing-invoice #printable-invoice-sheet {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 12mm 14mm !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border: none !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.printing-invoice .no-print-invoice {
+    display: none !important;
+  }
+}

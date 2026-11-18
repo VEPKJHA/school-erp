@@ -35,11 +35,13 @@ import { Modal } from '../../components/common/Modal';
 import { Badge } from '../../components/common/Badge';
 import { useToast } from '../../context/ToastContext';
 import { usePermissions } from '../../hooks/usePermissions';
+import { useAuth } from '../../context/AuthContext';
 
 export const InvoicesListPage: React.FC = () => {
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
   const { success, error } = useToast();
+  const { user } = useAuth();
 
   const [invoices, setInvoices] = useState<FeeInvoice[]>([]);
   const [total, setTotal] = useState(0);
@@ -122,6 +124,46 @@ export const InvoicesListPage: React.FC = () => {
     }, 300);
     return () => clearTimeout(timer);
   }, [search, statusFilter, classFilter]);
+
+  // Handle printing invoice with student-specific sanitized filename
+  const handlePrintInvoice = (inv: FeeInvoice) => {
+    if (!inv) return;
+
+    const originalTitle = document.title;
+
+    // Sanitize invoice title and names for a clean filename
+    const cleanInvNo = (inv.invoiceNumber || 'INV').replace(/[^a-zA-Z0-9_-]/g, '-');
+    const cleanStudentName = `${inv.student?.firstName || ''} ${inv.student?.lastName || ''}`
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-zA-Z0-9_-]/g, '');
+    const cleanPeriod = (inv.billingPeriod || inv.title || 'Fee')
+      .replace(/\s+/g, '-')
+      .replace(/[^a-zA-Z0-9_-]/g, '');
+
+    const customPdfTitle = `${cleanInvNo}_${cleanStudentName || 'Student'}_${cleanPeriod}`.replace(
+      /--+/g,
+      '-'
+    );
+
+    // Set document title so browser print saves with this clean filename
+    document.title = customPdfTitle;
+    document.body.classList.add('printing-invoice');
+
+    const cleanup = () => {
+      document.title = originalTitle || 'EduCore - School Management ERP';
+      document.body.classList.remove('printing-invoice');
+      window.removeEventListener('afterprint', cleanup);
+    };
+
+    window.addEventListener('afterprint', cleanup);
+
+    // Trigger browser print
+    window.print();
+
+    // Fallback cleanup if afterprint doesn't fire
+    setTimeout(cleanup, 2000);
+  };
 
   const openCollectModal = (inv: FeeInvoice) => {
     setCollectTarget(inv);
@@ -677,33 +719,80 @@ export const InvoicesListPage: React.FC = () => {
         maxWidth="lg"
       >
         {viewInvoice && (
-          <div className="space-y-6">
-            {/* Header / Bill Info */}
-            <div className="flex justify-between items-start p-4 bg-slate-50 border border-slate-200 rounded-xl">
-              <div>
-                <span className="font-mono text-xs font-bold text-indigo-600">
+          <div id="printable-invoice-sheet" className="space-y-6">
+            {/* School Header (Rendered prominently during Print) */}
+            <div className="border-b-2 border-slate-900 pb-4 flex justify-between items-start">
+              <div className="flex items-center gap-3">
+                {user?.school?.logoUrl ? (
+                  <img
+                    src={user.school.logoUrl}
+                    alt={user.school.name || 'School Logo'}
+                    className="w-14 h-14 object-contain rounded-lg border border-slate-200"
+                  />
+                ) : (
+                  <div className="w-12 h-12 bg-indigo-900 text-white font-black text-xl flex items-center justify-center rounded-lg">
+                    {user?.school?.name?.[0] || 'E'}
+                  </div>
+                )}
+                <div>
+                  <h2 className="text-lg font-black uppercase tracking-tight text-slate-900 leading-tight">
+                    {user?.school?.name || 'EduCore Global Academy'}
+                  </h2>
+                  <p className="text-xs text-slate-500 font-medium">
+                    {user?.school?.city ? `${user.school.city}, India` : 'Affiliated School Campus'} • Official Fee Invoice
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-right">
+                <span className="font-mono text-sm font-black text-indigo-700 block">
                   {viewInvoice.invoiceNumber}
                 </span>
-                <h3 className="text-base font-bold text-slate-900 mt-0.5">{viewInvoice.title}</h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Student: {viewInvoice.student?.firstName} {viewInvoice.student?.lastName} (Adm:{' '}
-                  {viewInvoice.student?.admissionNumber}) • {viewInvoice.student?.class?.name}
+                <span className="text-[11px] text-slate-500 block">
+                  Issue Date: {new Date(viewInvoice.issueDate || viewInvoice.createdAt).toLocaleDateString()}
+                </span>
+                <span className="text-[11px] font-semibold text-rose-600 block">
+                  Due Date: {new Date(viewInvoice.dueDate).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+
+            {/* Bill Info & Student Details */}
+            <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+                  Billed To Student
+                </span>
+                <h3 className="text-sm font-bold text-slate-900">
+                  {viewInvoice.student?.firstName} {viewInvoice.student?.lastName}
+                </h3>
+                <p className="text-slate-600 mt-0.5">
+                  Admission No: <strong className="font-mono text-slate-800">{viewInvoice.student?.admissionNumber}</strong>
+                </p>
+                <p className="text-slate-600">
+                  Class & Section: <strong>{viewInvoice.student?.class?.name || 'N/A'}</strong>
                 </p>
               </div>
-              <div className="text-right">
-                <div className="mb-1">{getStatusBadge(viewInvoice.status)}</div>
-                <p className="text-xs text-slate-400">
-                  Due Date: {new Date(viewInvoice.dueDate).toLocaleDateString()}
-                </p>
+
+              <div className="text-right flex flex-col justify-between items-end">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
+                    Invoice Status
+                  </span>
+                  <div className="inline-block">{getStatusBadge(viewInvoice.status)}</div>
+                </div>
+                <div className="text-[11px] text-slate-500 font-medium">
+                  Billing Period: <span className="font-bold text-slate-800">{viewInvoice.billingPeriod || viewInvoice.title}</span>
+                </div>
               </div>
             </div>
 
             {/* Line Items Table */}
             <div className="border border-slate-200 rounded-xl overflow-hidden">
               <table className="w-full text-left text-xs text-slate-600">
-                <thead className="bg-slate-50 font-semibold text-slate-500 border-b border-slate-200">
+                <thead className="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
                   <tr>
-                    <th className="px-4 py-2.5">Fee Head</th>
+                    <th className="px-4 py-2.5">Fee Head & Description</th>
                     <th className="px-4 py-2.5 text-right">Amount</th>
                   </tr>
                 </thead>
@@ -711,7 +800,7 @@ export const InvoicesListPage: React.FC = () => {
                   {viewInvoice.items?.map((it) => (
                     <tr key={it.id}>
                       <td className="px-4 py-2.5">
-                        <span className="font-medium text-slate-800">{it.feeHead?.name}</span>
+                        <span className="font-semibold text-slate-900">{it.feeHead?.name}</span>
                         {it.description && it.description !== it.feeHead?.name && (
                           <span className="text-[11px] text-slate-400 block">{it.description}</span>
                         )}
@@ -775,9 +864,8 @@ export const InvoicesListPage: React.FC = () => {
                           <span className="font-mono font-bold text-slate-800">
                             {p.receiptNumber}
                           </span>
-                          <span className="text-[11px] text-slate-400 block">
-                            Mode: {p.paymentMode} ? Date:{' '}
-                            {new Date(p.paymentDate).toLocaleDateString()}
+                          <span className="text-[11px] text-slate-500 block">
+                            Mode: {p.paymentMode} • Date: {new Date(p.paymentDate).toLocaleDateString()}
                           </span>
                         </div>
                       </div>
@@ -790,11 +878,30 @@ export const InvoicesListPage: React.FC = () => {
               </div>
             )}
 
-            <div className="flex justify-end pt-4 border-t border-slate-100 print:hidden">
+            {/* Authorized Signatory Footer */}
+            <div className="pt-6 border-t border-slate-200 flex justify-between items-end text-xs text-slate-500">
+              <div>
+                <p className="text-[11px] leading-tight">
+                  This is a computer-generated official school fee invoice.<br />
+                  For inquiries, please contact the institution accounts office.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="h-10 flex items-end justify-center font-serif italic text-sm font-bold text-slate-800">
+                  {user?.school?.name?.split(' ')[0] || 'Principal'}
+                </div>
+                <div className="w-36 border-t border-slate-400 pt-1 text-[10px] uppercase font-bold text-slate-600 tracking-wider">
+                  Authorized Signatory
+                </div>
+              </div>
+            </div>
+
+            {/* Print button (Hidden during Print) */}
+            <div className="flex justify-end pt-4 border-t border-slate-100 print:hidden no-print-invoice">
               <button
                 type="button"
-                onClick={() => window.print()}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center space-x-2"
+                onClick={() => handlePrintInvoice(viewInvoice)}
+                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-colors flex items-center space-x-2 cursor-pointer"
               >
                 <FileText className="w-4 h-4" />
                 <span>Print Invoice</span>

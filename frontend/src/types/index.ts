@@ -346,6 +346,7 @@ export interface FeeInvoice {
   academicSessionId: string;
   invoiceNumber: string;
   title: string;
+  billingPeriod?: string;
   issueDate: string;
   dueDate: string;
   subtotal: number | string;
