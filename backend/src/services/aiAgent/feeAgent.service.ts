@@ -53,6 +53,92 @@ export class FeeAgentService {
   }
 
   /**
+   * Helper to sleep for ms
+   */
+  private static sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Executes ai.models.generateContent with automatic retry and prioritized fallback chain
+   * Fallback order: ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash']
+   * Automatically handles HTTP 503 (UNAVAILABLE / High Demand) and 429 (Rate Limit)
+   */
+  private static async generateContentWithFallback(
+    ai: GoogleGenAI,
+    params: {
+      contents: any[];
+      systemInstruction: string;
+      tools?: any[];
+    }
+  ): Promise<any> {
+    const models = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
+    let lastError: any = null;
+
+    for (let i = 0; i < models.length; i++) {
+      const model = models[i];
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: params.contents,
+          config: {
+            systemInstruction: { parts: [{ text: params.systemInstruction }] },
+            tools: params.tools,
+          },
+        });
+        return response;
+      } catch (err: any) {
+        lastError = err;
+        const errMsg = (err?.message || '').toLowerCase();
+        const errStatus = err?.status || err?.code || err?.statusCode || (err?.response && err?.response?.status);
+        const isTransient =
+          errStatus === 503 ||
+          errStatus === 429 ||
+          errMsg.includes('503') ||
+          errMsg.includes('429') ||
+          errMsg.includes('unavailable') ||
+          errMsg.includes('high demand') ||
+          errMsg.includes('resource_exhausted') ||
+          errMsg.includes('rate limit');
+
+        console.warn(
+          `[FeeAgentService] Model ${model} encountered error: ${err.message || err}. Transient: ${isTransient}. Remaining models: ${models.length - i - 1}`
+        );
+
+        if (isTransient && i < models.length - 1) {
+          // Wait 800ms before trying the next fallback model
+          await this.sleep(800);
+          continue;
+        }
+
+        // If not transient or last model, check if we still have fallback models
+        if (i < models.length - 1) {
+          await this.sleep(800);
+          continue;
+        }
+      }
+    }
+
+    // All fallback models exhausted - check if error was transient
+    const finalMsg = (lastError?.message || '').toLowerCase();
+    const finalStatus = lastError?.status || lastError?.code || (lastError?.response && lastError?.response?.status);
+    if (
+      finalStatus === 503 ||
+      finalStatus === 429 ||
+      finalMsg.includes('503') ||
+      finalMsg.includes('429') ||
+      finalMsg.includes('unavailable') ||
+      finalMsg.includes('high demand') ||
+      finalMsg.includes('resource_exhausted') ||
+      finalMsg.includes('rate limit')
+    ) {
+      throw new Error('The AI service is momentarily busy due to high traffic. Please click retry or try again in a few seconds.');
+    }
+
+    throw lastError;
+  }
+
+  /**
    * Main Agent Loop with Function / Tool Calling and HITL gate
    */
   static async handleChat(params: {
@@ -118,16 +204,11 @@ STRICT OPERATIONAL RULES:
     const toolResultsAcc: any[] = [];
 
     try {
-      // Step 1: Initial call to Gemini model (using gemini-3.5-flash with fallback)
-      const modelName = 'gemini-3.5-flash';
-
-      const response = await ai.models.generateContent({
-        model: modelName,
+      // Step 1: Initial call to Gemini model using automatic retry and fallback chain
+      const response = await this.generateContentWithFallback(ai, {
         contents,
-        config: {
-          systemInstruction: { parts: [{ text: systemInstruction }] },
-          tools,
-        },
+        systemInstruction,
+        tools,
       });
 
       // Inspect candidates and function calls
@@ -196,13 +277,10 @@ STRICT OPERATIONAL RULES:
           },
         ];
 
-        const followUpResponse = await ai.models.generateContent({
-          model: modelName,
+        const followUpResponse = await this.generateContentWithFallback(ai, {
           contents: followUpContents,
-          config: {
-            systemInstruction: { parts: [{ text: systemInstruction }] },
-            tools,
-          },
+          systemInstruction,
+          tools,
         });
 
         const finalReply =
@@ -230,7 +308,11 @@ STRICT OPERATIONAL RULES:
       };
     } catch (err: any) {
       console.error('[FeeAgentService] Gemini invocation error:', err);
-      throw new Error(`AI Assistant Error: ${err.message || 'Unable to process AI agent request.'}`);
+      const rawMessage = err.message || '';
+      if (rawMessage.startsWith('AI Assistant Error:')) {
+        throw err;
+      }
+      throw new Error(`AI Assistant Error: ${rawMessage || 'Unable to process AI agent request.'}`);
     }
   }
 

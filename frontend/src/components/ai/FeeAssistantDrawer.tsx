@@ -128,10 +128,28 @@ export const FeeAssistantDrawer: React.FC<FeeAssistantDrawerProps> = ({
 
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err: any) {
+      let friendlyError =
+        err.response?.data?.message || err.message || 'Unable to connect to AI Agent.';
+
+      // Strip raw JSON error payloads
+      const lower = String(friendlyError).toLowerCase();
+      if (
+        lower.includes('503') ||
+        lower.includes('429') ||
+        lower.includes('unavailable') ||
+        lower.includes('high demand') ||
+        lower.includes('resource_exhausted') ||
+        lower.includes('rate limit') ||
+        friendlyError.trim().startsWith('{')
+      ) {
+        friendlyError =
+          'The AI service is momentarily busy due to high traffic. Please click retry or try again in a few seconds.';
+      }
+
       const errorMsg: DisplayMessage = {
         id: `err-${Date.now()}`,
         role: 'assistant',
-        content: `⚠️ Error: ${err.response?.data?.message || err.message || 'Unable to connect to AI Agent.'}`,
+        content: `⚠️ ${friendlyError}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, errorMsg]);

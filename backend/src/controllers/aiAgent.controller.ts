@@ -33,7 +33,24 @@ export class AiAgentController {
       return ResponseUtil.success(res, result, 'Agent response generated successfully');
     } catch (error: any) {
       console.error('[AiAgentController.chat] error:', error);
-      return ResponseUtil.serverError(res, error.message || 'Failed to process AI agent request');
+      let userFriendlyMessage = error.message || 'Failed to process AI agent request';
+
+      // Clean raw JSON error payloads (e.g. {"error":{"code":503...}})
+      const lower = userFriendlyMessage.toLowerCase();
+      if (
+        lower.includes('503') ||
+        lower.includes('429') ||
+        lower.includes('unavailable') ||
+        lower.includes('high demand') ||
+        lower.includes('resource_exhausted') ||
+        lower.includes('rate limit') ||
+        userFriendlyMessage.trim().startsWith('{')
+      ) {
+        userFriendlyMessage =
+          'The AI service is momentarily busy due to high traffic. Please click retry or try again in a few seconds.';
+      }
+
+      return ResponseUtil.serverError(res, userFriendlyMessage);
     }
   }
 
