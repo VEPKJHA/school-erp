@@ -197,14 +197,34 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
   if (isLandscape) {
     return (
       <div
-        className="cr80-card group relative bg-white text-slate-900 rounded-[3.18mm] overflow-hidden border border-slate-300 shadow-sm flex flex-col justify-between p-[2.5mm] select-none"
+        className="cr80-card group relative text-slate-900 rounded-[3.18mm] overflow-hidden border border-slate-300 shadow-sm flex flex-col justify-between p-[2.5mm] select-none bg-white"
         style={cardStyle}
       >
-        {/* Top Header Banner */}
-        <div className="absolute top-0 left-0 right-0 h-[14.5mm] bg-gradient-to-r from-indigo-950 via-indigo-900 to-indigo-950 flex items-center px-[3mm] gap-[2.8mm] shadow-xs">
+        {/* Print-Guaranteed Inline SVG Diagonal Dual-Color Background Layer */}
+        <svg
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }}
+        >
+          {/* Base bottom/right soft warm background */}
+          <polygon points="0,0 100,0 100,100 0,100" fill="#f8fafc" />
+          {/* Top/Left diagonal wedge in rich institutional Navy */}
+          <polygon points="0,0 100,0 100,28 0,42" fill="#1e3a8a" />
+          {/* Subtle diagonal accent stripe along the split line */}
+          <polygon points="0,42 100,28 100,31.5 0,45.5" fill="#f59e0b" />
+          {/* Bottom subtle secondary gradient accent wedge */}
+          <polygon points="0,88 100,74 100,100 0,100" fill="#f1f5f9" />
+        </svg>
+
+        {/* Top Header Banner - High-contrast white text over dark navy wedge */}
+        <div
+          className="relative z-10 flex items-center gap-[2.5mm] px-[1mm] pt-[0.5mm] pb-[1mm]"
+          style={{ position: 'relative', zIndex: 10 }}
+        >
           {school?.logoUrl ? (
             <div
-              className="rounded-full bg-white shadow-xs shrink-0 flex items-center justify-center border border-white/60 overflow-hidden"
+              className="rounded-full bg-white shadow-xs shrink-0 flex items-center justify-center border border-white/80 overflow-hidden"
               style={{
                 width: '11mm',
                 height: '11mm',
@@ -238,7 +258,7 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
             </div>
           ) : (
             <div
-              className="rounded-full bg-white text-indigo-950 font-black text-[7.5pt] flex items-center justify-center shrink-0 shadow-xs border border-white/60"
+              className="rounded-full bg-white text-indigo-950 font-black text-[7.5pt] flex items-center justify-center shrink-0 shadow-xs border border-white/80"
               style={{
                 width: '11mm',
                 height: '11mm',
@@ -257,25 +277,31 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
               {school?.name?.slice(0, 2)?.toUpperCase() || 'ED'}
             </div>
           )}
-          <div className="text-white overflow-hidden flex-1">
-            <h3 className="text-[7.8pt] font-black uppercase tracking-wide truncate leading-tight">
+          <div className="overflow-hidden flex-1 leading-tight">
+            <h3
+              className="text-[7.8pt] font-black uppercase tracking-wide truncate leading-tight text-white"
+              style={{ color: '#ffffff', fontWeight: 900 }}
+            >
               {school?.name || 'EduCore Global Academy'}
             </h3>
-            <p className="text-[5pt] text-indigo-200 font-medium truncate leading-none mt-[0.8mm]">
-              {school?.city ? `${school.city}, ${school.state || 'India'}` : 'Affiliated to CBSE Board'}
-              {student.session?.name ? ` • Session: ${student.session.name}` : ''}
+            <p
+              className="text-[5.2pt] font-bold truncate leading-none mt-[0.6mm] text-amber-300"
+              style={{ color: '#fde047', fontWeight: 700 }}
+            >
+              {student.session?.name ? `Session ${student.session.name}` : 'Student Identity Card'}
+              {school?.city ? ` • ${school.city}` : ''}
             </p>
           </div>
         </div>
 
-        {/* Spacer for banner */}
-        <div className="h-[14mm]" />
-
-        {/* Body content */}
-        <div className="flex-1 flex gap-[2.5mm] items-center pt-[1mm] overflow-hidden">
+        {/* Body content placed cleanly above the SVG background */}
+        <div
+          className="relative z-10 flex-1 flex gap-[2.5mm] items-center pt-[1.5mm] overflow-hidden"
+          style={{ position: 'relative', zIndex: 10 }}
+        >
           {/* Photo with locked dimensions */}
           <div className="relative shrink-0">
-            <div className="w-[22mm] h-[26mm] rounded-[2mm] overflow-hidden border-2 border-indigo-700 bg-slate-100 flex items-center justify-center shrink-0">
+            <div className="w-[22mm] h-[26mm] rounded-[2mm] overflow-hidden border-2 border-indigo-900 bg-white shadow-xs flex items-center justify-center shrink-0">
               {student.photoUrl ? (
                 <img
                   src={student.photoUrl}
@@ -307,7 +333,7 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
           {/* Details */}
           <div className="flex-1 space-y-[0.7mm] overflow-hidden">
             <div>
-              <span className="text-[4.5pt] font-black uppercase text-indigo-700 tracking-wider block leading-none">
+              <span className="text-[4.5pt] font-black uppercase text-indigo-800 tracking-wider block leading-none">
                 Student
               </span>
               <h4 className="text-[8.5pt] font-black text-slate-900 leading-tight truncate">
@@ -317,32 +343,35 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
 
             <div className="grid grid-cols-2 gap-x-[1.5mm] gap-y-[0.5mm] text-[5.6pt]">
               <div>
-                <span className="text-[4.3pt] text-slate-400 uppercase block font-bold leading-none">Adm No.</span>
+                <span className="text-[4.3pt] text-slate-500 uppercase block font-bold leading-none">Adm No.</span>
                 <span className="font-bold text-indigo-950 font-mono">{student.admissionNumber}</span>
               </div>
               <div>
-                <span className="text-[4.3pt] text-slate-400 uppercase block font-bold leading-none">Class & Sec</span>
+                <span className="text-[4.3pt] text-slate-500 uppercase block font-bold leading-none">Class & Sec</span>
                 <span className="font-bold text-slate-900">{className}{sectionName}</span>
               </div>
               <div>
-                <span className="text-[4.3pt] text-slate-400 uppercase block font-bold leading-none">DOB</span>
+                <span className="text-[4.3pt] text-slate-500 uppercase block font-bold leading-none">DOB</span>
                 <span className="font-bold text-slate-800">{dobStr}</span>
               </div>
               <div>
-                <span className="text-[4.3pt] text-slate-400 uppercase block font-bold leading-none">Blood Group</span>
+                <span className="text-[4.3pt] text-slate-500 uppercase block font-bold leading-none">Blood Group</span>
                 <span className="font-bold text-rose-700">{student.bloodGroup || 'N/A'}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Footer with Front Scannable QR (14mm x 14mm) + Principal Sign */}
-        <div className="border-t border-slate-200 pt-[0.8mm] flex items-center justify-between text-[4.5pt]">
-          <span className="text-slate-400 font-medium">EduCore ERP ID Verified</span>
+        {/* Footer with Front Scannable QR (12mm x 12mm) + Principal Sign */}
+        <div
+          className="relative z-10 border-t border-slate-300 pt-[0.8mm] flex items-center justify-between text-[4.5pt]"
+          style={{ position: 'relative', zIndex: 10 }}
+        >
+          <span className="text-slate-500 font-medium">EduCore ERP ID Verified</span>
 
-          {/* Front QR Code (14mm x 14mm) */}
+          {/* Front QR Code (12mm x 12mm) */}
           <div className="flex items-center gap-[1.5mm]">
-            <div className="border border-slate-200 bg-white p-[0.6mm] rounded-[1mm]">
+            <div className="border border-slate-300 bg-white p-[0.6mm] rounded-[1mm]">
               <QRCodeSVG
                 value={verificationPayload}
                 size={40}
@@ -370,14 +399,34 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
   // -------------------------------------------------------------
   return (
     <div
-      className="cr80-card group relative bg-white text-slate-900 rounded-[3.18mm] overflow-hidden border border-slate-300 shadow-sm flex flex-col justify-between p-[2.5mm] select-none"
+      className="cr80-card group relative text-slate-900 rounded-[3.18mm] overflow-hidden border border-slate-400 shadow-sm flex flex-col justify-between p-[2.5mm] select-none bg-white"
       style={cardStyle}
     >
-      {/* Top Header */}
-      <div className="text-center border-b border-indigo-100 pb-[1.5mm] pt-[0.5mm] flex flex-col items-center">
+      {/* Print-Guaranteed Inline SVG Diagonal Dual-Color Background Layer */}
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }}
+      >
+        {/* Base bottom/right soft warm background */}
+        <polygon points="0,0 100,0 100,100 0,100" fill="#f8fafc" />
+        {/* Top diagonal wedge in rich institutional Navy */}
+        <polygon points="0,0 100,0 100,24 0,33" fill="#1e3a8a" />
+        {/* Subtle diagonal accent stripe */}
+        <polygon points="0,33 100,24 100,26.5 0,35.5" fill="#f59e0b" />
+        {/* Bottom subtle secondary gradient accent wedge */}
+        <polygon points="0,92 100,85 100,100 0,100" fill="#f1f5f9" />
+      </svg>
+
+      {/* Top Header - White & gold text on dark navy wedge */}
+      <div
+        className="relative z-10 text-center pb-[1.2mm] pt-[0.5mm] flex flex-col items-center"
+        style={{ position: 'relative', zIndex: 10 }}
+      >
         {school?.logoUrl ? (
           <div
-            className="rounded-full bg-white shadow-xs mb-[0.8mm] flex items-center justify-center border border-indigo-200 overflow-hidden"
+            className="rounded-full bg-white shadow-xs mb-[0.8mm] flex items-center justify-center border border-white/80 overflow-hidden"
             style={{
               width: '11mm',
               height: '11mm',
@@ -411,7 +460,7 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
           </div>
         ) : (
           <div
-            className="rounded-full bg-indigo-950 text-white font-black text-[7.5pt] flex items-center justify-center mb-[0.8mm] shadow-xs"
+            className="rounded-full bg-white text-indigo-950 font-black text-[7.5pt] flex items-center justify-center mb-[0.8mm] shadow-xs border border-white/80"
             style={{
               width: '11mm',
               height: '11mm',
@@ -430,17 +479,26 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
             {school?.name?.slice(0, 2)?.toUpperCase() || 'ED'}
           </div>
         )}
-        <h3 className="text-[7.2pt] font-black uppercase tracking-wide text-indigo-950 truncate px-[1mm] leading-tight max-w-[48mm]">
+        <h3
+          className="text-[7.2pt] font-black uppercase tracking-wide text-white truncate px-[1mm] leading-tight max-w-[48mm]"
+          style={{ color: '#ffffff', fontWeight: 900 }}
+        >
           {school?.name || 'EduCore Global Academy'}
         </h3>
-        <p className="text-[4.8pt] text-indigo-600 font-bold mt-[0.5mm] leading-none">
+        <p
+          className="text-[4.8pt] font-bold mt-[0.5mm] leading-none text-amber-300"
+          style={{ color: '#fde047', fontWeight: 700 }}
+        >
           {student.session?.name ? `Session ${student.session.name}` : 'Student Identity Card'}
         </p>
       </div>
 
       {/* Portrait Photo with locked size */}
-      <div className="relative mx-auto my-[1.2mm]">
-        <div className="w-[22mm] h-[26mm] rounded-[2mm] overflow-hidden border-2 border-indigo-700 bg-slate-100 flex items-center justify-center shrink-0">
+      <div
+        className="relative z-10 mx-auto my-[1mm]"
+        style={{ position: 'relative', zIndex: 10 }}
+      >
+        <div className="w-[22mm] h-[26mm] rounded-[2mm] overflow-hidden border-2 border-indigo-900 bg-white shadow-xs flex items-center justify-center shrink-0">
           {student.photoUrl ? (
             <img
               src={student.photoUrl}
@@ -469,34 +527,43 @@ export const StudentIdCard: React.FC<StudentIdCardProps> = ({
       </div>
 
       {/* Name and Grade */}
-      <div className="text-center">
-        <h4 className="text-[8pt] font-black text-slate-900 truncate leading-tight">
+      <div
+        className="relative z-10 text-center"
+        style={{ position: 'relative', zIndex: 10 }}
+      >
+        <h4 className="text-[8.2pt] font-black text-slate-900 truncate leading-tight">
           {fullName}
         </h4>
-        <div className="inline-block px-[2mm] py-[0.4mm] rounded-full bg-indigo-50 border border-indigo-200 text-indigo-950 text-[5.2pt] font-bold mt-[0.6mm]">
-          {className}{sectionName}
+        <div className="inline-block px-[2.5mm] py-[0.4mm] rounded-full bg-indigo-900 text-white text-[5.2pt] font-bold mt-[0.5mm]">
+          Class: {className} {sectionName ? `(${sectionName})` : ''}
         </div>
       </div>
 
       {/* Student Details Grid */}
-      <div className="space-y-[0.6mm] bg-slate-50 p-[1.2mm] rounded-[1.5mm] text-[5.2pt] border border-slate-100 my-[0.8mm]">
+      <div
+        className="relative z-10 space-y-[0.6mm] bg-white/90 p-[1.2mm] rounded-[1.5mm] text-[5.2pt] border border-slate-200 my-[0.8mm] shadow-xs"
+        style={{ position: 'relative', zIndex: 10 }}
+      >
         <div className="flex justify-between">
-          <span className="text-slate-400 font-bold uppercase text-[4.5pt]">Adm No:</span>
-          <span className="font-bold text-slate-900 font-mono">{student.admissionNumber}</span>
+          <span className="text-slate-500 font-bold uppercase text-[4.5pt]">Adm No:</span>
+          <span className="font-bold text-indigo-950 font-mono">{student.admissionNumber}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-400 font-bold uppercase text-[4.5pt]">DOB:</span>
+          <span className="text-slate-500 font-bold uppercase text-[4.5pt]">DOB:</span>
           <span className="font-bold text-slate-800">{dobStr}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-slate-400 font-bold uppercase text-[4.5pt]">Blood:</span>
+          <span className="text-slate-500 font-bold uppercase text-[4.5pt]">Blood Group:</span>
           <span className="font-bold text-rose-700">{student.bloodGroup || 'N/A'}</span>
         </div>
       </div>
 
       {/* Footer with Front QR + Authorized Signature */}
-      <div className="border-t border-slate-200 pt-[0.8mm] flex justify-between items-end text-[4.5pt]">
-        <div className="border border-slate-200 bg-white p-[0.5mm] rounded-[1mm]">
+      <div
+        className="relative z-10 border-t border-slate-300 pt-[0.8mm] flex justify-between items-end text-[4.5pt]"
+        style={{ position: 'relative', zIndex: 10 }}
+      >
+        <div className="border border-slate-300 bg-white p-[0.5mm] rounded-[0.8mm] shadow-xs">
           <QRCodeSVG
             value={verificationPayload}
             size={36}
